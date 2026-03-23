@@ -1,0 +1,98 @@
+* {
+  font: "Google Sans 12";
+  text-color: #e8e6e3;
+  background-color: transparent;
+
+  accent: #929521;
+  on-accent: #0b0b0b;
+
+  bg: rgba(0, 0, 0, 0.92);
+  bg2: rgba(16, 16, 16, 0.92);
+  border: rgba(255, 255, 255, 0.10);
+  border-accent: rgba(146, 149, 33, 0.40);
+  muted: rgba(232, 230, 227, 0.70);
+
+  radius: 18px;
+  pad: 12px;
+  pad-sm: 8px;
+}
+
+window {
+  location: north;
+  anchor: north;
+  width: 560px;
+  y-offset: 70px;
+  padding: 0;
+  border: 1px;
+  border-radius: @radius;
+  border-color: @border;
+  background-color: @bg;
+}
+
+mainbox {
+  padding: @pad;
+  background-color: transparent;
+}
+
+inputbar {
+  children: [ prompt, entry ];
+  border: 1px;
+  border-radius: 16px;
+  border-color: @border;
+  background-color: @bg2;
+  padding: @pad-sm;
+  spacing: 10px;
+}
+
+prompt {
+  text-color: @muted;
+}
+
+entry {
+  placeholder: "Type to search…";
+  placeholder-color: rgba(232, 230, 227, 0.45);
+}
+
+listview {
+  margin: 12px 0 0 0;
+  spacing: 8px;
+  dynamic: true;
+  lines: 8;
+  scrollbar: true;
+  background-color: transparent;
+}
+
+element {
+  border-radius: 16px;
+  padding: 10px 12px;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+element-icon {
+  size: 18px;
+  margin: 0 10px 0 0;
+}
+
+element-text {
+  text-color: @text-color;
+}
+
+element selected {
+  background-color: @accent;
+}
+
+element selected element-text {
+  text-color: @on-accent;
+}
+
+element selected element-icon {
+  text-color: @on-accent;
+}
+
+scrollbar {
+  width: 6px;
+  handle-width: 6px;
+  background-color: transparent;
+  handle-color: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}

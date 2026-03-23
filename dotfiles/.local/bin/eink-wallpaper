@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  eink-wallpaper /abs/path/to/wallpaper.(png|jpg|...)
+  eink-wallpaper --restore
+
+What it does:
+  - sets wallpaper via swww (starts daemon if needed)
+  - generates ~/.cache/quickshell/eink/colors.json via matugen
+  - generates ~/.config/kitty/colors-eink.conf from matugen base16
+EOF
+}
+
+restore=false
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+  exit 0
+fi
+if [[ "${1:-}" == "--restore" ]]; then
+  restore=true
+  shift || true
+fi
+
+wallpaper_path="${1:-}"
+cfg_dir="${XDG_CONFIG_HOME:-$HOME/.config}/eink"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/eink"
+kitty_dir="${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
+
+mkdir -p "$cfg_dir" "$cache_dir" "$kitty_dir"
+
+wallpaper_file="$cfg_dir/wallpaper"
+
+if $restore; then
+  if [[ -s "$wallpaper_file" ]]; then
+    wallpaper_path="$(head -n 1 "$wallpaper_file")"
+  else
+    exit 0
+  fi
+fi
+
+if [[ -z "$wallpaper_path" ]]; then
+  echo "eink-wallpaper: missing wallpaper path" >&2
+  usage >&2
+  exit 2
+fi
+
+if [[ "$wallpaper_path" != /* ]]; then
+  wallpaper_path="$(realpath "$wallpaper_path")"
+fi
+if [[ ! -f "$wallpaper_path" ]]; then
+  echo "eink-wallpaper: not a file: $wallpaper_path" >&2
+  exit 2
+fi
+
+echo "$wallpaper_path" > "$wallpaper_file"
+
+if command -v swww >/dev/null 2>&1; then
+  if ! swww query >/dev/null 2>&1; then
+    (swww-daemon >/dev/null 2>&1 &) || true
+    sleep 0.2
+  fi
+
+  swww img "$wallpaper_path" \
+    --transition-type grow \
+    --transition-duration 0.9 \
+    --transition-fps 60 \
+    --transition-pos 0.5,0.3 >/dev/null
+fi
+
+tmp_json="$(mktemp)"
+cleanup() { rm -f "$tmp_json"; }
+trap cleanup EXIT
+
+{
+  # matugen sometimes fails to decode specific images (bad/corrupt JPEGs, mislabeled formats, etc).
+  # Never abort the wallpaper apply because of palette generation; we can fall back to a neutral palette.
+  matugen image "$wallpaper_path" -m dark -j hex --dry-run --source-color-index 0 --quiet >"$tmp_json" 2>/dev/null || true
+  if ! jq -e '.colors? // empty' <"$tmp_json" >/dev/null 2>&1; then
+    matugen image "$wallpaper_path" -m dark -j hex --dry-run --source-color-index 0 \
+      --fallback-color "#d9c76f" --continue-on-error --quiet >"$tmp_json" 2>/dev/null || true
+  fi
+} || true
+
+colors_out="$cache_dir/colors.json"
+
+# If the wallpaper is essentially grayscale, use a clean white accent.
+# "Grayscale" detection is done in two ways to handle tinted/noisy B/W images:
+#  1) mean saturation in HSL (near 0)
+if command -v magick >/dev/null 2>&1; then
+  # In ImageMagick, HSL channels map as: R=Hue, G=Saturation, B=Lightness.
+  sat_mean="$(magick "$wallpaper_path" -resize 96x96\! -colorspace HSL -format "%[fx:mean.g]" info: 2>/dev/null || true)"
+  is_gray=0
+  if [[ -n "${sat_mean:-}" ]]; then
+    is_gray="$(awk -v s="$sat_mean" 'BEGIN{ if (s+0 < 0.12) print 1; else print 0 }' 2>/dev/null || echo 0)"
+  fi
+
+  if [[ "$is_gray" == "1" ]]; then
+    cat >"$tmp_json" <<'JSON'
+{
+  "colors": {
+    "primary": { "dark": { "color": "#ffffff" } },
+    "on_primary": { "dark": { "color": "#000000" } },
+    "surface_container_high": { "dark": { "color": "#2b2a28" } },
+    "surface_container": { "dark": { "color": "#22211f" } },
+    "outline_variant": { "dark": { "color": "#4a4739" } },
+    "on_surface": { "dark": { "color": "#efe9db" } },
+    "on_surface_variant": { "dark": { "color": "#cdc6b4" } }
+  }
+}
+JSON
+  fi
+fi
+
+# If matugen fails hard (or outputs nothing/invalid JSON), ensure we still write a palette
+# so quickshell theme updates instead of sticking to the previous colors.json.
+if ! jq -e '.colors.primary.dark.color? // .colors.primary.color? // empty' <"$tmp_json" >/dev/null 2>&1; then
+  cat >"$tmp_json" <<'JSON'
+{
+  "colors": {
+    "primary": { "dark": { "color": "#ffffff" } },
+    "on_primary": { "dark": { "color": "#000000" } },
+    "surface_container_high": { "dark": { "color": "#2b2a28" } },
+    "surface_container": { "dark": { "color": "#22211f" } },
+    "outline_variant": { "dark": { "color": "#4a4739" } },
+    "on_surface": { "dark": { "color": "#efe9db" } },
+    "on_surface_variant": { "dark": { "color": "#cdc6b4" } }
+  }
+}
+JSON
+fi
+
+# Write in-place (not atomic replace) so FileView watchers reliably see updates.
+cat "$tmp_json" >"$colors_out"
+chmod 0644 "$colors_out" 2>/dev/null || true
+
+# Hyprland: match active border to the current accent.
+if command -v hyprctl >/dev/null 2>&1; then
+  accent_hex="$(jq -r '.colors.primary.dark.color // .colors.primary.color // "#ffffff"' <"$tmp_json" 2>/dev/null || echo "#ffffff")"
+  accent_hex="${accent_hex#\#}"
+  if [[ "$accent_hex" =~ ^[0-9a-fA-F]{6}$ ]]; then
+    hyprctl keyword general:col.active_border "rgba(${accent_hex}ff) rgba(${accent_hex}99) 45deg" >/dev/null 2>&1 || true
+  fi
+fi
+
+# Kitty base16 theme from matugen output.
+kitty_colors="$kitty_dir/colors-eink.conf"
+{
+  echo "# Autogenerated by ~/.local/bin/eink-wallpaper"
+  echo
+  base() { jq -r ".base16.${1}.dark.color // empty" <"$tmp_json"; }
+
+  echo "background $(base base00)"
+  echo "foreground $(base base05)"
+  echo
+  echo "color0  $(base base00)"
+  echo "color1  $(base base08)"
+  echo "color2  $(base base0B)"
+  echo "color3  $(base base0A)"
+  echo "color4  $(base base0D)"
+  echo "color5  $(base base0E)"
+  echo "color6  $(base base0C)"
+  echo "color7  $(base base05)"
+  echo "color8  $(base base03)"
+  echo "color9  $(base base08)"
+  echo "color10 $(base base0B)"
+  echo "color11 $(base base0A)"
+  echo "color12 $(base base0D)"
+  echo "color13 $(base base0E)"
+  echo "color14 $(base base0C)"
+  echo "color15 $(base base07)"
+} >"$kitty_colors"
+
+echo "eink-wallpaper: updated theme from $wallpaper_path"

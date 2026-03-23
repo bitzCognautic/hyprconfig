@@ -1,0 +1,15 @@
+{
+  "pillHPadding": -1,
+  "pillHeight": 34,
+  "pillOpacity": 1,
+  "pillTopMargin": 5,
+  "popupGap": 10,
+  "popupOverlap": 10,
+  "accentOverride": "#071424",
+  "idleDimSeconds": 15,
+  "idleSleepSeconds": 900,
+  "idleDimPercent": 1,
+  "idleScreenOffSeconds": 120,
+  "nightlightTempNight": 2000,
+  "nightlightTempDay": 2100
+}

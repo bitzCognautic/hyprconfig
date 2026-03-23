@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-}"
+
+state_dir="/tmp/eink-launcher"
+pending_file="${state_dir}/pending"
+interrupted_file="${state_dir}/interrupted"
+
+mkdir -p "$state_dir"
+
+begin() {
+  local id
+  id="$(date +%s%N)"
+  printf '%s' "$id" >"$pending_file"
+  rm -f "$interrupted_file"
+
+  # Delay gives Hyprland time to see if this is a real combo (Super+something).
+  # If any other key/mouse action happens, the bindin handlers call `interrupt`.
+  (
+    sleep 0.12
+    [[ -f "$pending_file" ]] || exit 0
+    [[ "$(cat "$pending_file" 2>/dev/null || true)" == "$id" ]] || exit 0
+    [[ ! -f "$interrupted_file" ]] || exit 0
+
+    # Launch rofi; keep it idempotent-ish.
+    rofi -show drun >/dev/null 2>&1 &
+  ) >/dev/null 2>&1 &
+}
+
+interrupt() {
+  # Mark interrupted and cancel pending.
+  : >"$interrupted_file"
+  printf '0' >"$pending_file"
+
+  # If rofi already popped due to timing, close it.
+  pkill -x rofi >/dev/null 2>&1 || true
+}
+
+end() {
+  # Clear state so a fresh tap works next time.
+  rm -f "$pending_file" "$interrupted_file"
+}
+
+case "$cmd" in
+  begin) begin ;;
+  interrupt) interrupt ;;
+  end) end ;;
+  *)
+    echo "Usage: eink-launcher {begin|interrupt|end}" >&2
+    exit 2
+    ;;
+esac
+

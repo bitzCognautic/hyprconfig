@@ -1,0 +1,214 @@
+@define-color bg rgba(0, 0, 0, 0.94);
+@define-color bg2 rgba(18, 18, 18, 0.94);
+@define-color card rgba(12, 12, 12, 0.92);
+@define-color border rgba(255, 255, 255, 0.10);
+@define-color border-accent rgba(146, 149, 33, 0.40);
+@define-color text #e8e6e3;
+@define-color muted rgba(232, 230, 227, 0.68);
+@define-color accent #929521;
+@define-color on-accent #0b0b0b;
+@define-color danger rgba(255, 92, 92, 0.85);
+
+* {
+  all: unset;
+  font-family: Google Sans, Product Sans, Noto Sans, sans-serif;
+  font-size: 12px;
+  color: @text;
+}
+
+/* ---- Notification popups ---- */
+
+.notification-row {
+  margin: 10px 10px 0 10px;
+}
+
+.notification {
+  background: @card;
+  border: 1px solid @border;
+  border-left: 3px solid @border-accent;
+  border-radius: 18px;
+  padding: 10px 12px;
+}
+
+.notification.low,
+.notification.normal {
+  border-left-color: rgba(146, 149, 33, 0.55);
+}
+
+.notification.critical {
+  border-left-color: @danger;
+  border-color: rgba(255, 92, 92, 0.35);
+}
+
+.image {
+  border-radius: 12px;
+  margin-right: 10px;
+}
+
+.app-icon {
+  margin-right: 10px;
+}
+
+.summary {
+  font-weight: 800;
+  font-size: 13px;
+  color: @text;
+}
+
+.body {
+  margin-top: 4px;
+  color: @muted;
+}
+
+.time {
+  color: rgba(232, 230, 227, 0.55);
+  font-size: 11px;
+}
+
+.close-button {
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.actions {
+  margin-top: 10px;
+}
+
+.action-button {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 10px;
+  font-weight: 700;
+}
+
+.action-button:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.action-button:focus {
+  border-color: rgba(146, 149, 33, 0.55);
+}
+
+/* ---- Control Center / Panel ---- */
+
+.control-center {
+  background: @bg;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  padding: 12px;
+}
+
+.control-center-list {
+  background: transparent;
+}
+
+.widget-title {
+  font-weight: 900;
+  font-size: 13px;
+  margin: 4px 0 10px 0;
+}
+
+/* Header (Title widget) */
+.widget-title > label {
+  color: @text;
+}
+
+.widget-title > button,
+.widget-title button {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 10px;
+  font-weight: 800;
+}
+
+.widget-title > button:hover,
+.widget-title button:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* Do Not Disturb widget */
+.widget-dnd {
+  background: @bg2;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.widget-dnd > label {
+  font-weight: 800;
+}
+
+.widget-dnd > switch {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 2px;
+}
+
+.widget-dnd > switch slider {
+  min-width: 18px;
+  min-height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.widget-dnd > switch:checked {
+  background: rgba(146, 149, 33, 0.55);
+  border-color: rgba(146, 149, 33, 0.65);
+}
+
+/* Notifications list inside control center */
+.widget-notifications {
+  background: transparent;
+}
+
+.notification-group {
+  background: transparent;
+  margin-bottom: 10px;
+}
+
+.notification-group-header {
+  background: transparent;
+  margin: 4px 2px 8px 2px;
+}
+
+.notification-group-header > label {
+  font-weight: 900;
+  color: rgba(232, 230, 227, 0.78);
+}
+
+.notification-group-header > button {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 10px;
+  font-weight: 800;
+}
+
+.notification-group-header > button:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.notification-group .notification {
+  margin: 0 0 10px 0;
+}
+
+.blank-window {
+  background: rgba(0, 0, 0, 0.0);
+}
+
+.blank-window > label {
+  color: @muted;
+  font-weight: 800;
+  padding: 20px 0;
+}

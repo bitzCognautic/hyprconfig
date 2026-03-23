@@ -1,0 +1,37 @@
+{
+  "$schema": "/usr/share/swaync/configSchema.json",
+  "positionX": "right",
+  "positionY": "top",
+  "layer": "overlay",
+  "layer-shell": true,
+  "control-center-layer": "top",
+  "control-center-positionX": "right",
+  "control-center-positionY": "top",
+  "fit-to-screen": true,
+  "hide-on-clear": true,
+  "hide-on-action": true,
+  "timeout": 4,
+  "timeout-low": 3,
+  "timeout-critical": 0,
+  "notification-window-width": 360,
+  "notification-body-image-height": 120,
+  "notification-body-image-width": 120,
+  "widgets": [
+    "title",
+    "dnd",
+    "notifications"
+  ],
+  "widget-config": {
+    "title": {
+      "text": "Notifications",
+      "clear-all-button": true,
+      "button-text": "Clear"
+    },
+    "dnd": {
+      "text": "Do Not Disturb"
+    },
+    "notifications": {
+      "all-notifications": true
+    }
+  }
+}
