@@ -6,6 +6,7 @@ import Quickshell.Hyprland._Ipc 0.0
 import Quickshell.Io 0.0
 import Quickshell.Networking 0.0
 import Quickshell.Services.Pipewire 0.0
+import Quickshell.Services.SystemTray 0.0
 import Quickshell.Services.UPower 0.0
 import Quickshell.Wayland._WlrLayerShell 0.0
 
@@ -44,6 +45,10 @@ Item {
     readonly property int popupGap: settings.popupGap
     readonly property int popupOverlap: settings.popupOverlap
     readonly property int pillHPaddingPx: (settings.pillHPadding < 0) ? 0 : settings.pillHPadding
+    property var wsSymbolById: ({})
+    // NOTE: "Background apps after closing" can only be shown if the app exports a
+    // StatusNotifierItem/AppIndicator (i.e. a real tray icon). Non-tray apps cannot
+    // be forced into the system tray.
 
     Behavior on quickSettingsAnim {
         NumberAnimation {
@@ -245,6 +250,104 @@ Item {
         } catch (e) {
             return false
         }
+    }
+
+    function wsPrimaryAppSymbol(wsId) {
+        // Best-effort classification for a "what's open here?" icon in the workspace capsule.
+        // Populated via `hyprctl clients -j` polling so it works even if Hyprland IPC models
+        // are unavailable in this Quickshell build.
+        try {
+            const sym = root.wsSymbolById?.[wsId]
+            return (typeof sym === "string") ? sym : ""
+        } catch (e) {
+            return ""
+        }
+    }
+
+    function classifyWsSymbolsFromHyprctlClients(clients) {
+        try {
+            const out = ({})
+            let hasTerminal = false
+            let hasFiles = false
+            let hasBrowser = false
+            let hasEditor = false
+            let wsId = -1
+            let wsHasAny = false
+
+            function commit() {
+                if (!wsHasAny || wsId < 1) return
+                if (hasTerminal) out[wsId] = "terminal"
+                else if (hasFiles) out[wsId] = "folder"
+                else if (hasBrowser) out[wsId] = "language"
+                else if (hasEditor) out[wsId] = "code"
+                else out[wsId] = "apps"
+            }
+
+            for (const c of clients ?? []) {
+                if (!c) continue
+                const curWs = (c.workspace?.id ?? c.workspace ?? -1)
+                if (curWs !== wsId) {
+                    commit()
+                    wsId = curWs
+                    hasTerminal = false
+                    hasFiles = false
+                    hasBrowser = false
+                    hasEditor = false
+                    wsHasAny = false
+                }
+                if (wsId < 1) continue
+                wsHasAny = true
+
+                const cls = String(c.class ?? c.initialClass ?? "").toLowerCase()
+                const title = String(c.title ?? "").toLowerCase()
+
+                if (
+                    cls === "kitty" ||
+                    cls === "alacritty" ||
+                    cls === "foot" ||
+                    cls === "wezterm" ||
+                    cls === "konsole" ||
+                    cls.includes("terminal") ||
+                    title.includes("terminal") ||
+                    title.includes("shell")
+                ) hasTerminal = true
+                else if (cls === "dolphin" || cls.includes("dolphin") || cls.includes("nautilus") || cls.includes("thunar")) hasFiles = true
+                else if (cls.includes("firefox") || cls.includes("brave") || cls.includes("chrom") || cls.includes("zen")) hasBrowser = true
+                else if (cls.includes("code") || cls.includes("codium") || cls.includes("nvim") || cls.includes("neovim")) hasEditor = true
+            }
+            commit()
+            return out
+        } catch (e) {
+            return ({})
+        }
+    }
+
+    StdioCollector { id: hyprClientsOut; waitForEnd: true }
+    StdioCollector { id: hyprClientsErr; waitForEnd: true }
+
+    Process {
+        id: hyprClientsGet
+        stdout: hyprClientsOut
+        stderr: hyprClientsErr
+        onExited: function(exitCode, exitStatus) {
+            hyprClientsGet.running = false
+            const raw = ((hyprClientsOut.text ?? "").trim() || (hyprClientsErr.text ?? "").trim())
+            if (exitCode !== 0 || raw.length === 0) return
+            try {
+                const arr = JSON.parse(raw)
+                root.wsSymbolById = root.classifyWsSymbolsFromHyprctlClients(arr)
+            } catch (e) {
+                // ignore parse errors
+            }
+        }
+    }
+
+    function refreshWorkspaceSymbols() {
+        if (hyprClientsGet.running) return
+        hyprClientsOut.waitForEnd = true
+        hyprClientsErr.waitForEnd = true
+        hyprClientsGet.command = ["sh", "-lc", "hyprctl clients -j 2>/dev/null || true"]
+        hyprClientsGet.running = true
     }
 
     function refreshNetworking() {
@@ -477,6 +580,7 @@ Item {
             root.refreshAudio()
             root.refreshBrightness()
             root.refreshRecording()
+            root.refreshWorkspaceSymbols()
         }
     }
 
@@ -485,6 +589,7 @@ Item {
         root.refreshAudio()
         root.refreshBrightness()
         root.refreshRecording()
+        root.refreshWorkspaceSymbols()
     }
 
     StdioCollector { id: recOut; waitForEnd: true }
@@ -654,6 +759,11 @@ Item {
 	                        id: wsIsland
 	                        Layout.alignment: Qt.AlignVCenter
 	                        property int wsCount: 5
+                            readonly property int wsBase: {
+                                const id = Hyprland.focusedWorkspace?.id ?? 1
+                                const n = (typeof id === "number" && isFinite(id) && id > 0) ? Math.floor(id) : 1
+                                return Math.floor((n - 1) / wsCount) * wsCount
+                            }
 	                        readonly property int islandHeight: Math.max(18, Math.round(settings.pillHeight * 0.55))
 	                        readonly property int buttonHeight: Math.max(14, islandHeight - 4)
 	                        readonly property int buttonWidth: Math.max(20, buttonHeight + 8)
@@ -674,9 +784,10 @@ Item {
                             Repeater {
                                 model: wsIsland.wsCount
 	                                delegate: Rectangle {
-                                    property int ws: index + 1
+                                    property int ws: wsIsland.wsBase + index + 1
                                     property bool active: (Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === ws)
                                     property bool occupied: root.wsOccupied(ws)
+                                    property string primaryAppSymbol: root.wsPrimaryAppSymbol(ws)
 
 	                                    width: wsIsland.buttonWidth
 	                                    height: wsIsland.buttonHeight
@@ -688,13 +799,32 @@ Item {
                                             : Qt.rgba(theme.surface.r, theme.surface.g, theme.surface.b, 0.48))
                                     border.width: 0
 
-                                    Text {
+                                    Item {
                                         anchors.centerIn: parent
-                                        text: "" + ws
-                                        color: active ? theme.onAccent : (occupied ? theme.text : theme.textMuted)
-                                        font.family: theme.fontFamily
-                                        font.pixelSize: 10
-                                        font.weight: Font.DemiBold
+                                        width: parent.width
+                                        height: parent.height
+
+                                        EinkSymbol {
+                                            anchors.centerIn: parent
+                                            visible: occupied && primaryAppSymbol.length > 0
+                                            symbol: primaryAppSymbol
+                                            fallbackSymbol: primaryAppSymbol
+                                            fontFamily: theme.iconFontFamilyFallback
+                                            fontFamilyFallback: theme.iconFontFamilyFallback
+                                            color: active ? theme.onAccent : theme.text
+                                            size: 13
+                                            iconOpacity: 0.95
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            visible: !occupied || primaryAppSymbol.length === 0
+                                            text: "" + ws
+                                            color: active ? theme.onAccent : (occupied ? theme.text : theme.textMuted)
+                                            font.family: theme.fontFamily
+                                            font.pixelSize: 10
+                                            font.weight: Font.DemiBold
+                                        }
                                     }
 
                                     MouseArea {
@@ -702,6 +832,128 @@ Item {
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: Hyprland.dispatch("workspace " + ws)
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    // System tray (background apps: Discord, Steam, etc.)
+                    // Loader ensures it takes *zero* layout space when empty (Caelestia-style behavior).
+                    Loader {
+                        id: trayLoader
+                        Layout.alignment: Qt.AlignVCenter
+                        active: (SystemTray.items.values?.length ?? 0) > 0
+                        visible: active
+
+                        sourceComponent: Rectangle {
+                            id: trayIsland
+
+                            // end-4 style: keep tray compact, but allow scrolling through all items.
+                            property int maxIcons: 6
+                            property int offset: 0
+                            readonly property int islandHeight: Math.max(18, Math.round(settings.pillHeight * 0.55))
+                            readonly property int iconSize: Math.max(14, islandHeight - 4)
+                            readonly property int overflow: Math.max(0, (SystemTray.items.values?.length ?? 0) - maxIcons)
+
+                            radius: 999
+                            height: islandHeight
+                            color: Qt.rgba(theme.surface.r, theme.surface.g, theme.surface.b, 0.38)
+                            border.width: 0
+
+                            implicitWidth: trayRow.implicitWidth + 14
+                            width: implicitWidth
+
+                            onOverflowChanged: {
+                                const count = (SystemTray.items.values?.length ?? 0)
+                                const maxOffset = Math.max(0, count - trayIsland.maxIcons)
+                                if (trayIsland.offset > maxOffset) trayIsland.offset = maxOffset
+                            }
+
+                            RowLayout {
+                                id: trayRow
+                                anchors.centerIn: parent
+                                spacing: 10
+
+                                Repeater {
+                                    model: SystemTray.items.values ?? []
+                                    delegate: Item {
+                                        property var trayItem: modelData
+
+                                        // Show a scrollable window of tray items.
+                                        visible: index >= trayIsland.offset && index < (trayIsland.offset + trayIsland.maxIcons)
+                                        width: trayIsland.iconSize
+                                        height: trayIsland.iconSize
+
+                                        Image {
+                                            anchors.fill: parent
+                                            source: trayItem?.icon ?? ""
+                                            fillMode: Image.PreserveAspectFit
+                                            smooth: true
+                                            sourceSize.width: trayIsland.iconSize
+                                            sourceSize.height: trayIsland.iconSize
+                                            opacity: 0.95
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                            onPressed: function(mouse) {
+                                                const it = trayItem
+                                                if (!it) return
+
+                                                // end-4 style behavior:
+                                                // - Left click activates
+                                                // - Right click opens the app-provided tray menu (if any)
+                                                // Use this item's own window as the anchor host.
+                                                const win = parent.QsWindow?.window
+                                                const p = parent.mapToItem(null, mouse.x, mouse.y)
+
+                                                if (mouse.button === Qt.RightButton) {
+                                                    if (it.hasMenu && win) it.display(win, Math.round(p.x), Math.round(p.y))
+                                                    mouse.accepted = true
+                                                    return
+                                                }
+
+                                                if (it.onlyMenu && it.hasMenu && win) it.display(win, Math.round(p.x), Math.round(p.y))
+                                                else it.activate()
+                                                mouse.accepted = true
+                                            }
+                                            onWheel: function(wheel) {
+                                                const it = trayItem
+                                                if (!it) return
+                                                const delta = (wheel.angleDelta?.y ?? 0) / 120
+                                                if (delta !== 0) it.scroll(delta)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    visible: (SystemTray.items.values?.length ?? 0) > trayIsland.maxIcons
+                                    text: "+" + Math.max(0, (SystemTray.items.values?.length ?? 0) - (trayIsland.offset + trayIsland.maxIcons))
+                                    color: theme.textMuted
+                                    font.family: theme.fontFamily
+                                    font.pixelSize: 10
+                                    font.weight: Font.DemiBold
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                            }
+
+                            WheelHandler {
+                                target: trayIsland
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: function(wheel) {
+                                    const count = (SystemTray.items.values?.length ?? 0)
+                                    if (count <= trayIsland.maxIcons) return
+                                    const dy = (wheel.angleDelta && wheel.angleDelta.y) ? wheel.angleDelta.y
+                                        : ((wheel.pixelDelta && wheel.pixelDelta.y) ? wheel.pixelDelta.y : 0)
+                                    if (dy === 0) return
+                                    const dir = dy > 0 ? -1 : 1
+                                    const maxOffset = Math.max(0, count - trayIsland.maxIcons)
+                                    trayIsland.offset = Math.max(0, Math.min(maxOffset, trayIsland.offset + dir))
+                                    wheel.accepted = true
                                 }
                             }
                         }
@@ -1222,4 +1474,5 @@ Item {
             }
         }
     }
+
 }

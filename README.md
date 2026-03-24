@@ -9,7 +9,7 @@ This repo contains a small set of dotfiles that recreates the centered “pill�
 - Hyprland keybinds:
   - `SUPER + T` → `kitty`
   - `SUPER + Q` → close active window
-  - `SUPER + E` → `dolphin`
+  - `SUPER + E` → `nautilus`
 
 ## Install (stow-style layout)
 

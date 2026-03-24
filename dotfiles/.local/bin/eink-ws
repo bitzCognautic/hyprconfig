@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+eink-ws: Hyprland workspace groups of 5
+
+Usage:
+  eink-ws go 1|2|3|4|5
+  eink-ws next
+  eink-ws prev
+
+Behavior:
+  - "go N" jumps to workspace (group_base + N), where group_base is derived from the
+    currently focused workspace in blocks of 5 (1-5, 6-10, 11-15, ...).
+  - next/prev move within the current 5-workspace group and wrap at edges.
+EOF
+}
+
+die() { echo "eink-ws: $*" >&2; exit 2; }
+
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+if ! have_cmd hyprctl; then
+  die "hyprctl not found"
+fi
+
+active_ws_id() {
+  local id=""
+  if have_cmd jq; then
+    id="$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.id // empty' || true)"
+  fi
+  if [[ -z "$id" ]]; then
+    id="$(hyprctl activeworkspace 2>/dev/null | awk -F': ' '/workspace ID/ {print $2; exit}' || true)"
+  fi
+  [[ "$id" =~ ^[0-9]+$ ]] || id="1"
+  printf '%s' "$id"
+}
+
+ws_id="$(active_ws_id)"
+group_base=$(( ((ws_id - 1) / 5) * 5 ))
+pos_in_group=$(( ((ws_id - 1) % 5) + 1 ))
+
+cmd="${1:-}"
+case "$cmd" in
+  -h|--help|"") usage; exit 0 ;;
+  go)
+    [[ $# -eq 2 ]] || die "usage: eink-ws go 1..5"
+    n="$2"
+    [[ "$n" =~ ^[1-5]$ ]] || die "go expects 1..5"
+    target=$(( group_base + n ))
+    ;;
+  next)
+    # Grow to the next workspace id (no wrapping).
+    target=$(( ws_id + 1 ))
+    ;;
+  prev)
+    # Go to previous workspace id (clamped to 1).
+    target=$(( ws_id > 1 ? (ws_id - 1) : 1 ))
+    ;;
+  *)
+    die "unknown command: $cmd"
+    ;;
+esac
+
+hyprctl dispatch workspace "$target" >/dev/null

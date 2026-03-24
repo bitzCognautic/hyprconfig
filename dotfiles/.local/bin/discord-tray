@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Discord tray on Wayland can be unreliable depending on the build.
+# For Electron-based Discord, forcing X11 often restores the StatusNotifierItem (tray icon + app menu).
+
+if command -v discord >/dev/null 2>&1; then
+  exec discord --ozone-platform=x11 "$@"
+elif command -v Discord >/dev/null 2>&1; then
+  exec Discord --ozone-platform=x11 "$@"
+else
+  echo "discord-tray: discord binary not found" >&2
+  exit 127
+fi
+
