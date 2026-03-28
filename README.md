@@ -5,6 +5,7 @@ This repo contains a small set of dotfiles that recreates the centered “pill�
 ## What you get
 
 - Quickshell top bar (time + workspaces + volume + Wi‑Fi SSID + battery pill)
+  - Click the time to toggle a calendar popup
 - Dynamic colors driven by wallpaper (`matugen image ... -j hex`)
 - Hyprland keybinds:
   - `SUPER + T` → `kitty`

@@ -36,12 +36,14 @@ Item {
     property bool bluetoothDetailsOpen: false
     property bool powerOpen: false
     property bool recordOpen: false
+    property bool calendarOpen: false
     property real quickSettingsAnim: 0
     property real settingsAnim: 0
     property real wifiAnim: 0
     property real bluetoothAnim: 0
     property real powerAnim: 0
     property real recordAnim: 0
+    property real calendarAnim: 0
     readonly property int popupGap: settings.popupGap
     readonly property int popupOverlap: settings.popupOverlap
     readonly property int pillHPaddingPx: (settings.pillHPadding < 0) ? 0 : settings.pillHPadding
@@ -99,6 +101,23 @@ Item {
     onBluetoothDetailsOpenChanged: bluetoothAnim = bluetoothDetailsOpen ? 1 : 0
     onPowerOpenChanged: powerAnim = powerOpen ? 1 : 0
     onRecordOpenChanged: recordAnim = recordOpen ? 1 : 0
+    Behavior on calendarAnim {
+        NumberAnimation {
+            duration: 180
+            easing.type: Easing.OutCubic
+        }
+    }
+    onCalendarOpenChanged: calendarAnim = calendarOpen ? 1 : 0
+
+    function closeOtherPopups(keep) {
+        if (keep !== "quick") root.quickSettingsOpen = false
+        if (keep !== "settings") root.settingsOpen = false
+        if (keep !== "wifi") root.wifiDetailsOpen = false
+        if (keep !== "bt") root.bluetoothDetailsOpen = false
+        if (keep !== "power") root.powerOpen = false
+        if (keep !== "record") root.recordOpen = false
+        if (keep !== "calendar") root.calendarOpen = false
+    }
 
     StdioCollector {
         id: wpctlGetOut
@@ -700,16 +719,33 @@ Item {
                         Layout.preferredHeight: 1
                     }
 
-                    // Time
-                    Text {
-                        text: settings.time24h
-                            ? Qt.formatTime(clock.date, "HH:mm")
-                            : Qt.formatTime(clock.date, "hh:mm ap")
-                        color: theme.text
-                        font.family: theme.fontFamily
-                        font.pixelSize: 12
-                        font.weight: Font.DemiBold
+                    // Time (click to open calendar)
+                    Item {
+                        id: timeHit
                         Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: timeText.implicitWidth
+                        implicitHeight: timeText.implicitHeight
+
+                        Text {
+                            id: timeText
+                            text: settings.time24h
+                                ? Qt.formatTime(clock.date, "HH:mm")
+                                : Qt.formatTime(clock.date, "hh:mm ap")
+                            color: theme.text
+                            font.family: theme.fontFamily
+                            font.pixelSize: 12
+                            font.weight: Font.DemiBold
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: function(mouse) {
+                                root.closeOtherPopups("calendar")
+                                root.calendarOpen = !root.calendarOpen
+                            }
+                        }
                     }
 
                     // Recording indicator
@@ -1010,6 +1046,7 @@ Item {
                                     if (!root.tryToggleMute()) muteToggleTimer.start()
                                     return
                                 }
+                                root.closeOtherPopups("quick")
                                 root.quickSettingsOpen = !root.quickSettingsOpen
                             }
                         }
@@ -1072,7 +1109,7 @@ Item {
 			                            hoverEnabled: true
 			                            cursorShape: Qt.PointingHandCursor
 			                            onClicked: {
-			                                root.powerOpen = false
+			                                root.closeOtherPopups("quick")
 			                                root.quickSettingsOpen = !root.quickSettingsOpen
 			                            }
 			                        }
@@ -1146,7 +1183,10 @@ Item {
 		                            anchors.fill: parent
 		                            hoverEnabled: true
 		                            cursorShape: Qt.PointingHandCursor
-		                            onClicked: root.powerOpen = !root.powerOpen
+		                            onClicked: {
+		                                root.closeOtherPopups("power")
+		                                root.powerOpen = !root.powerOpen
+		                            }
 		                        }
 		                    }
 
@@ -1223,19 +1263,19 @@ Item {
                 y: Math.round(popupLayer.closedY + root.quickSettingsAnim * (popupLayer.openY - popupLayer.closedY))
                 onRequestClose: root.quickSettingsOpen = false
                 onRequestOpenSettings: {
-                    root.quickSettingsOpen = false
+                    root.closeOtherPopups("settings")
                     root.settingsOpen = true
                 }
                 onRequestOpenWifiDetails: {
-                    root.quickSettingsOpen = false
+                    root.closeOtherPopups("wifi")
                     root.wifiDetailsOpen = true
                 }
                 onRequestOpenBluetoothDetails: {
-                    root.quickSettingsOpen = false
+                    root.closeOtherPopups("bt")
                     root.bluetoothDetailsOpen = true
                 }
                 onRequestOpenRecorder: {
-                    root.quickSettingsOpen = false
+                    root.closeOtherPopups("record")
                     root.recordOpen = true
                 }
                 z: 2
@@ -1472,6 +1512,57 @@ Item {
                         mouse.y >= recordModal.y &&
                         mouse.y <= (recordModal.y + recordModal.height)
                     if (!inside) root.recordOpen = false
+                }
+            }
+        }
+    }
+
+    WlrLayershell {
+        id: calendarLayer
+
+        layer: WlrLayer.Top
+        keyboardFocus: WlrKeyboardFocus.None
+        aboveWindows: true
+        focusable: false
+        exclusiveZone: 0
+        namespace: "eink-calendar"
+        color: "transparent"
+        visible: root.calendarOpen || root.calendarAnim > 0.001
+
+        anchors {
+            top: true
+            left: true
+            right: true
+            bottom: true
+        }
+
+        readonly property real openY: Math.round(pill.y + pill.height + root.popupGap - root.popupOverlap)
+        readonly property real closedY: Math.round(-calendarModal.implicitHeight - 12)
+
+        Item {
+            anchors.fill: parent
+
+            CalendarModal {
+                id: calendarModal
+                theme: theme
+                width: Math.min(implicitWidth, calendarLayer.width - 24)
+                x: Math.round((calendarLayer.width - width) / 2)
+                y: Math.round(calendarLayer.closedY + root.calendarAnim * (calendarLayer.openY - calendarLayer.closedY))
+                onRequestClose: root.calendarOpen = false
+                z: 2
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                z: 1
+                enabled: root.calendarAnim > 0.001
+                onClicked: function(mouse) {
+                    const inside =
+                        mouse.x >= calendarModal.x &&
+                        mouse.x <= (calendarModal.x + calendarModal.width) &&
+                        mouse.y >= calendarModal.y &&
+                        mouse.y <= (calendarModal.y + calendarModal.height)
+                    if (!inside) root.calendarOpen = false
                 }
             }
         }
