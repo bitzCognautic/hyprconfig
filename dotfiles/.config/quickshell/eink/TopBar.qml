@@ -797,14 +797,14 @@ Item {
 	                        id: wsIsland
 	                        Layout.alignment: Qt.AlignVCenter
 	                        property int wsCount: 5
-                            readonly property int wsBase: {
+	                        readonly property int wsBase: {
                                 const id = Hyprland.focusedWorkspace?.id ?? 1
                                 const n = (typeof id === "number" && isFinite(id) && id > 0) ? Math.floor(id) : 1
                                 return Math.floor((n - 1) / wsCount) * wsCount
                             }
 	                        readonly property int islandHeight: Math.max(18, Math.round(settings.pillHeight * 0.55))
 	                        readonly property int buttonHeight: Math.max(14, islandHeight - 4)
-	                        readonly property int buttonWidth: Math.max(20, buttonHeight + 8)
+	                        readonly property int buttonWidth: Math.max(26, buttonHeight + 16)
 
 	                        radius: 999
 	                        height: islandHeight

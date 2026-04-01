@@ -14,6 +14,7 @@ Usage:
   ./install-arch.sh --dry-run
   ./install-arch.sh --no-packages
   ./install-arch.sh --no-stow
+  ./install-arch.sh --force
 
 Environment:
   AUR_HELPER=paru|yay    (optional; autodetected if unset)
@@ -24,6 +25,7 @@ EOF
 dry_run=false
 do_packages=true
 do_stow=true
+force=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run) dry_run=true; shift ;;
     --no-packages) do_packages=false; shift ;;
     --no-stow) do_stow=false; shift ;;
+    --force) force=true; shift ;;
     *)
       echo "Unknown arg: $1" >&2
       usage >&2
@@ -169,12 +172,26 @@ backup_if_conflict() {
   if [[ -n "$resolved" && "$resolved" == "$repo_root/dotfiles/"* ]]; then
     return 0
   fi
+  if $force; then
+    [[ -e "$target" || -L "$target" ]] && run rm -rf -- "$target"
+    return 0
+  fi
   # If the target exists and is not a symlink, stow will refuse. Back it up.
   if [[ -e "$target" && ! -L "$target" ]]; then
     local ts
     ts="$(date +%Y%m%d-%H%M%S)"
     run mv -f "$target" "${target}.bak.${ts}"
   fi
+}
+
+force_remove_dotfile_conflicts() {
+  # Remove only leaf paths that stow will link (files/symlinks inside the package),
+  # not directories like ~/.config.
+  local rel=""
+  while IFS= read -r rel; do
+    [[ -n "$rel" ]] || continue
+    run rm -rf -- "$stow_target/$rel"
+  done < <(cd "$repo_root/dotfiles" && find . -type f -o -type l | sed 's|^\./||')
 }
 
 pick_aur_helper() {
@@ -350,6 +367,12 @@ if $do_stow; then
 
   # Backup known conflict-prone files (stow refuses to overwrite real files).
   backup_if_conflict "$stow_target/.config/hypr/hyprlock.conf"
+
+  if $force; then
+    echo "Force enabled: removing existing linked paths and re-stowing..."
+    run stow -t "$stow_target" -D dotfiles >/dev/null 2>&1 || true
+    force_remove_dotfile_conflicts
+  fi
 
   run stow -t "$stow_target" dotfiles
   run chmod +x "$stow_target/.local/bin/eink-wallpaper" || true
