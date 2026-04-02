@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tmp="$(mktemp --suffix=.png)"
+cleanup() {
+  rm -f -- "$tmp"
+}
+trap cleanup EXIT
+
+geom="$(slurp)"
+[[ -n "$geom" ]] || exit 0
+
+# Let the selection overlay complete its exit animation before capture.
+sleep 0.12
+grim -g "$geom" "$tmp"
+
+text="$(tesseract "$tmp" stdout 2>/dev/null | sed 's/[[:space:]]*$//')"
+if [[ -z "$text" ]]; then
+  notify-send -a eink -u low "OCR" "No text detected"
+  exit 0
+fi
+
+printf '%s' "$text" | wl-copy
+notify-send -a eink -u low "OCR" "Copied extracted text to clipboard"

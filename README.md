@@ -9,6 +9,7 @@ This repo contains a small set of dotfiles that recreates the centered “pill�
 - Dynamic colors driven by wallpaper (`matugen image ... -j hex`)
 - Hyprland keybinds:
   - `SUPER + T` → `kitty`
+  - `SUPER + SHIFT + T` → OCR selected screen region to clipboard
   - `SUPER + Q` → close active window
   - `SUPER + E` → `nautilus`
 
