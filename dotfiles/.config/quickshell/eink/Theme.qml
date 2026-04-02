@@ -17,6 +17,13 @@ QtObject {
         if (xdg.length) return xdg
         return home.length ? (home + "/.cache") : ""
     }
+    readonly property string configHome: {
+        const xdg = envStr("XDG_CONFIG_HOME")
+        if (xdg.length) return xdg
+        return home.length ? (home + "/.config") : ""
+    }
+    readonly property string configDir: configHome.length ? (configHome + "/eink") : ""
+    readonly property string wallpaperPathFile: configDir.length ? (configDir + "/wallpaper") : ""
 
     // Keep in sync with ~/.local/bin/eink-wallpaper (writes to ~/.cache/quickshell/eink/colors.json).
     property string colorsPath: cacheHome.length ? (cacheHome + "/quickshell/eink/colors.json") : Quickshell.cachePath("eink/colors.json")
@@ -39,6 +46,7 @@ QtObject {
     // Use a tiny polling reader to ensure theme updates without restarting quickshell.
     property string _rawColorsText: ""
     property string _colorsMtime: ""
+    property string _wallpaperMtime: ""
 
     property var readOut: StdioCollector { waitForEnd: true }
     property var readErr: StdioCollector { waitForEnd: true }
@@ -61,10 +69,28 @@ QtObject {
         stderr: theme.statErr
         onExited: function(exitCode, exitStatus) {
             theme.statCmd.running = false
-            const mt = (theme.statOut.text ?? "").trim()
-            if (!mt || mt.length === 0) return
-            if (mt !== theme._colorsMtime) {
-                theme._colorsMtime = mt
+            const out = (theme.statOut.text ?? "").trim()
+            if (!out || out.length === 0) return
+
+            const mColors = (out.match(/(?:^|\\s)colors=(\\d+)/) || [])[1] ?? ""
+            const mWp = (out.match(/(?:^|\\s)wp=(\\d+)/) || [])[1] ?? ""
+            const colorsMtime = mColors.length ? mColors : "0"
+            const wpMtime = mWp.length ? mWp : "0"
+
+            const wpChanged = (wpMtime !== theme._wallpaperMtime)
+            theme._wallpaperMtime = wpMtime
+
+            // If the wallpaper changed, or the palette file is missing/stale, regenerate it.
+            const cNum = parseInt(colorsMtime, 10)
+            const wNum = parseInt(wpMtime, 10)
+            const paletteMissing = !cNum || cNum <= 0
+            const paletteStale = (isFinite(cNum) && isFinite(wNum) && wNum > 0 && cNum > 0 && cNum < wNum)
+            if ((wpChanged || paletteMissing || paletteStale) && !theme.genCmd.running) {
+                theme.tryGenerateColors()
+            }
+
+            if (colorsMtime !== theme._colorsMtime) {
+                theme._colorsMtime = colorsMtime
                 // Trigger a read on change.
                 if (!theme.readCmd.running) {
                     theme.readOut.waitForEnd = true
@@ -87,8 +113,59 @@ QtObject {
             if (!theme.colorsPath || theme.colorsPath.length === 0) return
             theme.statOut.waitForEnd = true
             theme.statErr.waitForEnd = true
-            theme.statCmd.command = ["sh", "-lc", "stat -c %Y " + JSON.stringify(theme.colorsPath) + " 2>/dev/null || true"]
+            theme.statCmd.command = ["sh", "-lc",
+                "echo -n colors=$(stat -c %Y " + JSON.stringify(theme.colorsPath) + " 2>/dev/null || echo 0); " +
+                "echo -n ' '; " +
+                "echo -n wp=$(stat -c %Y " + JSON.stringify(theme.wallpaperPathFile) + " 2>/dev/null || echo 0); " +
+                "echo"
+            ]
             theme.statCmd.running = true
+        }
+    }
+
+    property int _lastGenMs: 0
+    property var genOut: StdioCollector { waitForEnd: true }
+    property var genErr: StdioCollector { waitForEnd: true }
+
+    property var genCmd: Process {
+        stdout: theme.genOut
+        stderr: theme.genErr
+        onExited: function(exitCode, exitStatus) {
+            theme.genCmd.running = false
+            // Force a read next tick.
+            theme._colorsMtime = ""
+        }
+    }
+
+    function tryGenerateColors() {
+        try {
+            const now = Date.now()
+            if (now - theme._lastGenMs < 2000) return
+            theme._lastGenMs = now
+            if (!theme.wallpaperPathFile || theme.wallpaperPathFile.length === 0) return
+            if (!theme.colorsPath || theme.colorsPath.length === 0) return
+
+            theme.genOut.waitForEnd = true
+            theme.genErr.waitForEnd = true
+            theme.genCmd.command = ["sh", "-lc",
+                "wp=$(awk 'NF && $1!~ /^#/{print; exit}' " + JSON.stringify(theme.wallpaperPathFile) + " 2>/dev/null); " +
+                "[ -n \"$wp\" ] || exit 0; " +
+                "if [ \"$wp\" != \"${wp#/}\" ]; then wp=$(realpath \"$wp\" 2>/dev/null || echo \"$wp\"); fi; " +
+                "[ -f \"$wp\" ] || exit 0; " +
+                "out=" + JSON.stringify(theme.colorsPath) + "; " +
+                "mkdir -p \"$(dirname \"$out\")\" 2>/dev/null || true; " +
+                "tmp=\"$out.tmp\"; " +
+                "if command -v matugen >/dev/null 2>&1; then " +
+                "  matugen image \"$wp\" -m dark -j hex --dry-run --source-color-index 0 --quiet >\"$tmp\" 2>/dev/null || true; " +
+                "fi; " +
+                "if [ ! -s \"$tmp\" ]; then " +
+                "  printf '%s\\n' '{\"colors\":{\"primary\":{\"dark\":{\"color\":\"#b9b2a1\"}},\"secondary\":{\"dark\":{\"color\":\"#8f8a7c\"}},\"tertiary\":{\"dark\":{\"color\":\"#d3ccb9\"}},\"surface_container_high\":{\"dark\":{\"color\":\"#2b2a28\"}},\"surface_container\":{\"dark\":{\"color\":\"#22211f\"}},\"on_surface\":{\"dark\":{\"color\":\"#efe9db\"}},\"on_surface_variant\":{\"dark\":{\"color\":\"#cdc6b4\"}},\"outline_variant\":{\"dark\":{\"color\":\"#4a4739\"}}}}' >\"$tmp\"; " +
+                "fi; " +
+                "mv -f \"$tmp\" \"$out\" 2>/dev/null || true"
+            ]
+            theme.genCmd.running = true
+        } catch (e) {
+            // no-op
         }
     }
 

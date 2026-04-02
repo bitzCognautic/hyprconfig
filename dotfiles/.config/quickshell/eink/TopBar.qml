@@ -1328,6 +1328,7 @@ Item {
             SettingsModal {
                 theme: theme
                 settings: settings
+                active: root.settingsAnim > 0.001
                 anchors.centerIn: parent
                 width: Math.min(implicitWidth, settingsLayer.width - 24)
                 height: implicitHeight

@@ -2,20 +2,155 @@ import QtQuick
 import QtQuick.Layouts
 import Qt.labs.folderlistmodel
 
+import Quickshell.Io 0.0
+
 Item {
     id: root
 
     property var theme
     property var settings
+    property bool active: true
 
     signal requestClose()
 
     implicitWidth: 520
     implicitHeight: 420
 
-    property int sectionIndex: 0 // 0 = General, 1 = Wallpapers
+    property int sectionIndex: 0 // 0 = General, 1 = Wallpapers, 2 = System
 
     // Accent is static (no dynamic wallpaper colors).
+
+    property int cpuPct: 0
+    property int ramPct: 0
+    property int diskPct: 0
+    property int gpuPct: -1
+    property string diskLabel: "/"
+    property int _cpuPrevTotal: -1
+    property int _cpuPrevIdle: -1
+    property var cpuHist: ([] )
+    property var gpuHist: ([] )
+    property var ramHist: ([] )
+    property var diskHist: ([] )
+    readonly property int historyMax: 80
+
+    function _clampPct(v) {
+        const n = parseInt(v, 10)
+        if (!isFinite(n)) return 0
+        return Math.max(0, Math.min(100, n))
+    }
+
+    function _setPct(prop, v) {
+        root[prop] = _clampPct(v)
+    }
+
+    function _appendHistory(prop, v) {
+        const arr = (root[prop] ?? ([] ))
+        const next = arr.concat([v]).slice(-root.historyMax)
+        root[prop] = next
+    }
+
+    function refreshSystemStats() {
+        if (!root.active) return
+        if (sysGet.running) return
+        sysOut.waitForEnd = true
+        sysErr.waitForEnd = true
+        sysGet.command = ["sh", "-lc",
+            // Outputs:
+            // CPU_TOTAL_IDLE="<total> <idle>"
+            // MEM_KB="<totalKb> <availKb>"
+            // DISK_KB="<totalKb> <usedKb>"
+            // GPU_PCT="<util>" (optional)
+            "awk '/^cpu /{print \"CPU_TOTAL_IDLE=\" ($2+$3+$4+$5+$6+$7+$8+$9) \" \" $5; exit}' /proc/stat 2>/dev/null; " +
+            "awk 'BEGIN{t=0;a=0} /MemTotal/{t=$2} /MemAvailable/{a=$2} END{print \"MEM_KB=\" t \" \" a}' /proc/meminfo 2>/dev/null; " +
+            "df -P / 2>/dev/null | awk 'NR==2{print \"DISK_KB=\" $2 \" \" $3}'; " +
+            "gpu=\"\"; for f in /sys/class/drm/card*/device/gpu_busy_percent; do [ -r \"$f\" ] && gpu=$(cat \"$f\" 2>/dev/null) && break; done; " +
+            "if [ -z \"$gpu\" ] && command -v nvidia-smi >/dev/null 2>&1; then gpu=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits 2>/dev/null | head -n1); fi; " +
+            "echo \"GPU_PCT=$gpu\""
+        ]
+        sysGet.running = true
+    }
+
+    StdioCollector { id: sysOut; waitForEnd: true }
+    StdioCollector { id: sysErr; waitForEnd: true }
+
+    Process {
+        id: sysGet
+        stdout: sysOut
+        stderr: sysErr
+        onExited: function(exitCode, exitStatus) {
+            sysGet.running = false
+            const raw = ((sysOut.text ?? "") + "\n" + (sysErr.text ?? "")).trim()
+            if (exitCode !== 0 || raw.length === 0) return
+
+            const lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0)
+            const kv = ({})
+            for (const line of lines) {
+                const idx = line.indexOf("=")
+                if (idx === -1) continue
+                kv[line.slice(0, idx)] = line.slice(idx + 1).trim()
+            }
+
+            const cpuParts = (kv.CPU_TOTAL_IDLE ?? "").split(/\s+/).filter(Boolean)
+            if (cpuParts.length >= 2) {
+                const total = parseInt(cpuParts[0], 10)
+                const idle = parseInt(cpuParts[1], 10)
+                if (isFinite(total) && isFinite(idle)) {
+                    if (root._cpuPrevTotal >= 0 && root._cpuPrevIdle >= 0) {
+                        const dTotal = total - root._cpuPrevTotal
+                        const dIdle = idle - root._cpuPrevIdle
+                        if (dTotal > 0 && dIdle >= 0) {
+                            const used = Math.round((1 - (dIdle / dTotal)) * 100)
+                            root.cpuPct = root._clampPct(used)
+                            root._appendHistory("cpuHist", root.cpuPct)
+                        }
+                    }
+                    root._cpuPrevTotal = total
+                    root._cpuPrevIdle = idle
+                }
+            }
+
+            const memParts = (kv.MEM_KB ?? "").split(/\s+/).filter(Boolean)
+            if (memParts.length >= 2) {
+                const totalKb = parseInt(memParts[0], 10)
+                const availKb = parseInt(memParts[1], 10)
+                if (isFinite(totalKb) && totalKb > 0 && isFinite(availKb) && availKb >= 0) {
+                    root.ramPct = root._clampPct(Math.round((1 - (availKb / totalKb)) * 100))
+                    root._appendHistory("ramHist", root.ramPct)
+                }
+            }
+
+            const diskParts = (kv.DISK_KB ?? "").split(/\s+/).filter(Boolean)
+            if (diskParts.length >= 2) {
+                const totalKb = parseInt(diskParts[0], 10)
+                const usedKb = parseInt(diskParts[1], 10)
+                if (isFinite(totalKb) && totalKb > 0 && isFinite(usedKb) && usedKb >= 0) {
+                    root.diskPct = root._clampPct(Math.round((usedKb / totalKb) * 100))
+                    root._appendHistory("diskHist", root.diskPct)
+                }
+            }
+
+            const gpuRaw = (kv.GPU_PCT ?? "").trim()
+            if (gpuRaw.length === 0) {
+                root.gpuPct = -1
+                root._appendHistory("gpuHist", -1)
+            } else {
+                const g = parseInt(gpuRaw, 10)
+                root.gpuPct = isFinite(g) ? root._clampPct(g) : -1
+                root._appendHistory("gpuHist", root.gpuPct)
+            }
+        }
+    }
+
+    Timer {
+        id: sysPoll
+        interval: 1500
+        repeat: true
+        running: root.active && root.sectionIndex === 2
+        triggeredOnStart: true
+        onTriggered: root.refreshSystemStats()
+    }
+
+    onSectionIndexChanged: if (root.active && root.sectionIndex === 2) root.refreshSystemStats()
 
     function stepInt(key, cur, delta, minVal, maxVal) {
         const next = Math.max(minVal, Math.min(maxVal, Math.round(cur + delta)))
@@ -130,6 +265,24 @@ Item {
                         anchors.centerIn: parent
                         text: "Wallpapers"
                         color: root.sectionIndex === 1 ? root.theme.onAccent : root.theme.text
+                        font.family: root.theme.fontFamily
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 28
+                    radius: 12
+                    color: root.sectionIndex === 2
+                        ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.92)
+                        : "transparent"
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.sectionIndex = 2 }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "System"
+                        color: root.sectionIndex === 2 ? root.theme.onAccent : root.theme.text
                         font.family: root.theme.fontFamily
                         font.pixelSize: 12
                         font.weight: Font.DemiBold
@@ -789,6 +942,182 @@ Item {
 	                                    console.warn("wallpaper: applied", filePath)
 	                                }
 	                            }
+                        }
+                    }
+                }
+            }
+
+            // System
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                component UsageChart: Rectangle {
+                    id: chart
+                    property string title: ""
+                    property string valueText: ""
+                    property var values: ([] )
+                    radius: 16
+                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.75)
+                    border.width: 1
+                    border.color: Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.22)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 10
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                text: chart.title
+                                color: root.theme.text
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
+                                Layout.fillWidth: true
+                            }
+                            Text {
+                                text: chart.valueText
+                                color: root.theme.textMuted
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            radius: 12
+                            color: Qt.rgba(0, 0, 0, 0.10)
+                            border.width: 1
+                            border.color: Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.18)
+
+                            Canvas {
+                                id: canvas
+                                anchors.fill: parent
+                                anchors.margins: 8
+
+                                Connections {
+                                    target: chart
+                                    function onValuesChanged() {
+                                        canvas.requestPaint()
+                                    }
+                                }
+
+                                onPaint: {
+                                    const ctx = getContext("2d")
+                                    ctx.clearRect(0, 0, width, height)
+
+                                    const vals = chart.values ?? []
+                                    if (!vals.length) return
+
+                                    // grid
+                                    ctx.strokeStyle = "rgba(255,255,255,0.06)"
+                                    ctx.lineWidth = 1
+                                    for (let i = 1; i <= 3; i++) {
+                                        const y = Math.round((height * i) / 4)
+                                        ctx.beginPath()
+                                        ctx.moveTo(0, y)
+                                        ctx.lineTo(width, y)
+                                        ctx.stroke()
+                                    }
+
+                                    const accent = Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 1)
+                                    ctx.strokeStyle = accent
+                                    ctx.lineWidth = 2
+                                    ctx.lineJoin = "round"
+                                    ctx.lineCap = "round"
+
+                                    const xStep = width / Math.max(1, (vals.length - 1))
+                                    let started = false
+                                    ctx.beginPath()
+                                    for (let i = 0; i < vals.length; i++) {
+                                        const v = vals[i]
+                                        if (typeof v !== "number" || !isFinite(v) || v < 0) {
+                                            started = false
+                                            continue
+                                        }
+                                        const x = i * xStep
+                                        const y = height - (Math.max(0, Math.min(100, v)) / 100) * height
+                                        if (!started) {
+                                            ctx.moveTo(x, y)
+                                            started = true
+                                        } else {
+                                            ctx.lineTo(x, y)
+                                        }
+                                    }
+                                    ctx.stroke()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Flickable {
+                    anchors.fill: parent
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: width
+                    contentHeight: sysContent.implicitHeight
+
+                    ColumnLayout {
+                        id: sysContent
+                        width: parent.width
+                        spacing: 14
+
+                        Text {
+                            text: "System monitor"
+                            color: root.theme.textMuted
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+                            GridLayout {
+                                Layout.fillWidth: true
+                                columns: 2
+                                columnSpacing: 10
+                                rowSpacing: 10
+
+                                UsageChart {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 140
+                                    title: "CPU"
+                                    valueText: root.cpuPct + "%"
+                                    values: root.cpuHist
+                                }
+
+                                UsageChart {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 140
+                                    title: "GPU"
+                                    valueText: (root.gpuPct < 0) ? "N/A" : (root.gpuPct + "%")
+                                    values: root.gpuHist
+                                }
+
+                                UsageChart {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 140
+                                    title: "RAM"
+                                    valueText: root.ramPct + "%"
+                                    values: root.ramHist
+                                }
+
+                                UsageChart {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 140
+                                    title: "Disk " + root.diskLabel
+                                    valueText: root.diskPct + "%"
+                                    values: root.diskHist
+                                }
+                            }
                         }
                     }
                 }
