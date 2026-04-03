@@ -31,6 +31,8 @@ Item {
     property bool nightlightOn: false
     property bool keepAwakeOn: false
     property bool gameModeOn: false
+    property bool cpuPerformanceOn: false
+    property string cpuGovernor: ""
     property string powerProfile: ""
 
     property bool haveNmcli: true
@@ -42,6 +44,8 @@ Item {
     property bool haveGammastep: false
     property bool haveHyprsunset: false
     property string nightlightTool: ""
+    property bool haveCpuModeHelper: true
+    property bool canSetCpuGovernor: false
     property bool haveSystemdInhibit: true
     property bool haveSystemdRun: true
     property bool haveHyprctl: true
@@ -237,6 +241,35 @@ Item {
         tasks.push(function(done) {
             root.execSh("command -v systemd-inhibit >/dev/null 2>&1", function(code) {
                 root.haveSystemdInhibit = (code === 0)
+                done()
+            })
+        })
+        tasks.push(function(done) {
+            root.execSh("command -v ~/.local/bin/eink-cpu-mode >/dev/null 2>&1 || [ -x \"$HOME/.local/bin/eink-cpu-mode\" ]", function(code) {
+                root.haveCpuModeHelper = (code === 0)
+                done()
+            })
+        })
+        tasks.push(function(done) {
+            if (!root.haveCpuModeHelper) {
+                root.cpuGovernor = ""
+                root.cpuPerformanceOn = false
+                return done()
+            }
+            root.execSh("~/.local/bin/eink-cpu-mode status 2>/dev/null || true", function(code, out) {
+                const gov = (out ?? "").trim().toLowerCase()
+                root.cpuGovernor = gov
+                root.cpuPerformanceOn = (gov === "performance")
+                done()
+            })
+        })
+        tasks.push(function(done) {
+            if (!root.haveCpuModeHelper) {
+                root.canSetCpuGovernor = false
+                return done()
+            }
+            root.execSh("~/.local/bin/eink-cpu-mode can-set 2>/dev/null || true", function(code, out) {
+                root.canSetCpuGovernor = ((out ?? "").trim() === "1")
                 done()
             })
         })
@@ -648,6 +681,61 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.execSh("powerprofilesctl set " + modelData.profile + " 2>/dev/null || true", function() { root.refreshAll() })
                         }
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 42
+                radius: 14
+                color: !root.haveCpuModeHelper || !root.canSetCpuGovernor
+                    ? Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.45)
+                    : (root.cpuPerformanceOn
+                        ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.92)
+                        : Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95))
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 8
+
+                    EinkSymbol {
+                        symbol: root.cpuPerformanceOn ? "speed" : "eco"
+                        fallbackSymbol: root.cpuPerformanceOn ? "speed" : "eco"
+                        fontFamily: "Material Symbols Rounded"
+                        fontFamilyFallback: "Material Symbols Rounded"
+                        color: (!root.haveCpuModeHelper || !root.canSetCpuGovernor
+                            ? Qt.rgba(root.theme.textMuted.r, root.theme.textMuted.g, root.theme.textMuted.b, 0.7)
+                            : (root.cpuPerformanceOn ? root.theme.onAccent : root.theme.text))
+                        size: 18
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Text {
+                        text: root.cpuPerformanceOn
+                            ? "CPU governor: Performance"
+                            : ("CPU governor: " + (root.cpuGovernor.length > 0 ? root.cpuGovernor : "Powersave"))
+                        color: (!root.haveCpuModeHelper || !root.canSetCpuGovernor
+                            ? Qt.rgba(root.theme.textMuted.r, root.theme.textMuted.g, root.theme.textMuted.b, 0.7)
+                            : (root.cpuPerformanceOn ? root.theme.onAccent : root.theme.text))
+                        font.family: root.theme.fontFamily
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.haveCpuModeHelper && root.canSetCpuGovernor
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (!root.haveCpuModeHelper || !root.canSetCpuGovernor) return
+                        const nextGov = root.cpuPerformanceOn ? "powersave" : "performance"
+                        root.execSh("~/.local/bin/eink-cpu-mode set " + nextGov + " >/dev/null 2>&1 || true", function() { root.refreshAll() })
                     }
                 }
             }

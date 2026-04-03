@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+read_governor() {
+  cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || true
+}
+
+can_set() {
+  if command -v pkexec >/dev/null 2>&1; then
+    printf '1'
+    return 0
+  fi
+  if sudo -n true >/dev/null 2>&1; then
+    printf '1'
+    return 0
+  fi
+  printf '0'
+}
+
+set_governor() {
+  local mode="$1"
+  [[ "$mode" == "performance" || "$mode" == "powersave" ]] || exit 2
+
+  if command -v pkexec >/dev/null 2>&1; then
+    exec pkexec cpupower frequency-set -g "$mode"
+  fi
+
+  if sudo -n cpupower frequency-set -g "$mode" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  exit 1
+}
+
+case "${1:-}" in
+  status)
+    read_governor
+    ;;
+  can-set)
+    can_set
+    ;;
+  set)
+    set_governor "${2:-}"
+    ;;
+  *)
+    echo "usage: $0 {status|can-set|set <performance|powersave>}" >&2
+    exit 2
+    ;;
+esac

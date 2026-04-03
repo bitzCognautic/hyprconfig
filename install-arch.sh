@@ -309,6 +309,8 @@ if $do_packages; then
     rofi-wayland \
     cliphist \
     hyprlock \
+    cpupower \
+    polkit-gnome \
 	    hypridle \
 	    ttf-nerd-fonts-symbols \
 	    awww \
@@ -359,6 +361,7 @@ if $do_stow; then
   run chmod +x "$repo_root/dotfiles/.local/bin/eink-notify"
   run chmod +x "$repo_root/dotfiles/.local/bin/eink-ws"
   run chmod +x "$repo_root/dotfiles/.local/bin/eink-ocr"
+  run chmod +x "$repo_root/dotfiles/.local/bin/eink-cpu-mode"
   run chmod +x "$repo_root/dotfiles/.local/bin/discord-tray"
   run chmod +x "$repo_root/dotfiles/.local/bin/eink-sleep"
   # Quickshell QML files are loaded directly; no chmod needed.
@@ -382,6 +385,7 @@ if $do_stow; then
   run chmod +x "$stow_target/.local/bin/eink-launcher" || true
   run chmod +x "$stow_target/.local/bin/eink-hypridle-apply" || true
   run chmod +x "$stow_target/.local/bin/eink-ocr" || true
+  run chmod +x "$stow_target/.local/bin/eink-cpu-mode" || true
 fi
 
 echo "Done."
