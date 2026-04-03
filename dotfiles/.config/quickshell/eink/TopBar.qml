@@ -700,8 +700,8 @@ Item {
                 anchors.topMargin: settings.pillTopMargin
                 anchors.horizontalCenter: parent.horizontalCenter
 
-	                // Neutral dark grey (fixed).
-	                color: Qt.rgba(0.18, 0.18, 0.18, settings.pillOpacity)
+	                // Match the modal surface tone so the bar reads as true black.
+	                color: Qt.rgba(0.08, 0.08, 0.08, settings.pillOpacity)
                 border.width: 0
                 radius: 999
 

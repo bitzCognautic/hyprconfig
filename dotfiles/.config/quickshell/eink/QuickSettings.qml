@@ -25,6 +25,9 @@ Item {
 
     property bool wifiOn: false
     property bool btOn: false
+    property bool micOn: false
+    property bool cameraOn: false
+    property string cameraNodeId: ""
     property bool nightlightOn: false
     property bool keepAwakeOn: false
     property bool gameModeOn: false
@@ -32,6 +35,8 @@ Item {
 
     property bool haveNmcli: true
     property bool haveBluetoothctl: true
+    property bool haveWpctl: true
+    property bool haveCameraToggle: false
     property bool haveNightlight: true
     property bool haveWlsunset: false
     property bool haveGammastep: false
@@ -126,6 +131,55 @@ Item {
             root.execSh("bluetoothctl show 2>/dev/null | grep -i '^\\s*Powered:' || true", function(code, out) {
                 const s = out.toLowerCase()
                 root.btOn = (s.indexOf("yes") !== -1 || s.indexOf("on") !== -1)
+                done()
+            })
+        })
+
+        tasks.push(function(done) {
+            root.execSh("command -v wpctl >/dev/null 2>&1", function(code) {
+                root.haveWpctl = (code === 0)
+                done()
+            })
+        })
+        tasks.push(function(done) {
+            if (!root.haveWpctl) {
+                root.micOn = false
+                return done()
+            }
+            root.execSh("wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null || true", function(code, out) {
+                const s = (out ?? "").trim()
+                if (s.length === 0 || s.toLowerCase().indexOf("volume:") === -1) {
+                    root.micOn = false
+                    root.haveWpctl = false
+                    return done()
+                }
+                root.micOn = s.indexOf("[MUTED]") === -1
+                done()
+            })
+        })
+        tasks.push(function(done) {
+            if (!root.haveWpctl) {
+                root.haveCameraToggle = false
+                root.cameraOn = false
+                root.cameraNodeId = ""
+                return done()
+            }
+            root.execSh(
+                'cam_id="$(pw-dump 2>/dev/null | jq -r ".[] | select(.type == \\"PipeWire:Interface:Node\\") | select(.info.props[\\"media.class\\"] == \\"Video/Source\\") | .id" 2>/dev/null | head -n1)"; ' +
+                '[ -n "$cam_id" ] && wpctl get-volume "$cam_id" 2>/dev/null | sed "1s/^/ID=$cam_id /" || true',
+                function(code, out) {
+                const s = (out ?? "").trim()
+                const m = s.match(/^ID=(\S+)\s+(.*)$/)
+                if (!m) {
+                    root.haveCameraToggle = false
+                    root.cameraOn = false
+                    root.cameraNodeId = ""
+                    return done()
+                }
+                root.cameraNodeId = m[1]
+                const vol = m[2]
+                root.haveCameraToggle = (vol.length > 0 && vol.toLowerCase().indexOf("volume:") !== -1)
+                root.cameraOn = root.haveCameraToggle && vol.indexOf("[MUTED]") === -1
                 done()
             })
         })
@@ -323,6 +377,36 @@ Item {
                     root.execSh(root.btOn ? "bluetoothctl power off" : "bluetoothctl power on", function() { root.refreshAll() })
                 }
                 onRightClicked: root.requestOpenBluetoothDetails()
+            }
+
+            QuickToggle {
+                theme: root.theme
+                label: "Mic"
+                iconFontFamily: "Material Symbols Rounded"
+                iconFontFamilyFallback: "Material Symbols Rounded"
+                symbol: root.micOn ? "mic" : "mic_off"
+                fallbackSymbol: root.micOn ? "mic" : "mic_off"
+                checked: root.micOn
+                enabled: root.haveWpctl
+                onClicked: {
+                    if (!root.haveWpctl) return
+                    root.execSh("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle 2>/dev/null || true", function() { root.refreshAll() })
+                }
+            }
+
+            QuickToggle {
+                theme: root.theme
+                label: "Camera"
+                iconFontFamily: "Material Symbols Rounded"
+                iconFontFamilyFallback: "Material Symbols Rounded"
+                symbol: root.cameraOn ? "videocam" : "videocam_off"
+                fallbackSymbol: root.cameraOn ? "videocam" : "videocam_off"
+                checked: root.cameraOn
+                enabled: root.haveCameraToggle
+                onClicked: {
+                    if (!root.haveCameraToggle) return
+                    root.execSh("wpctl set-mute " + root.cameraNodeId + " toggle 2>/dev/null || true", function() { root.refreshAll() })
+                }
             }
 
             QuickToggle {
