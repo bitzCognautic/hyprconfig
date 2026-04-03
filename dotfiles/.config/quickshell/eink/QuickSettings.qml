@@ -360,6 +360,7 @@ Item {
     }
 
     Component.onCompleted: root.refreshAll()
+    onVisibleChanged: if (visible) root.refreshAll()
 
     Rectangle {
         anchors.fill: parent

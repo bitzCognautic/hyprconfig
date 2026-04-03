@@ -7,6 +7,7 @@ Item {
 
     property var theme
     signal requestClose()
+    signal stateChanged()
 
     property bool haveBluetoothctl: true
     property bool btPowered: false
@@ -14,6 +15,9 @@ Item {
 
     property bool busyOpen: false
     property string busyLabel: ""
+    property string pendingMac: ""
+    property bool pendingConnectedState: false
+    property int pendingPollsLeft: 0
 
     implicitWidth: 520
     implicitHeight: 320
@@ -42,6 +46,15 @@ Item {
         err.waitForEnd = true
         cmd.command = ["sh", "-lc", script]
         cmd.running = true
+    }
+
+    function clearBusy() {
+        root.busyOpen = false
+        root.busyLabel = ""
+        root.pendingMac = ""
+        root.pendingConnectedState = false
+        root.pendingPollsLeft = 0
+        pendingTimer.stop()
     }
 
 	    function refresh(doScan, done) {
@@ -99,6 +112,7 @@ Item {
             const limit = Math.min(devs.length, 12)
 	            if (limit === 0) {
 	                root.devices = []
+                    root.stateChanged()
 	                if (done) done()
 	                return
 	            }
@@ -120,6 +134,7 @@ Item {
 	                for (const d of devs) d.connected = !!map[d.mac]
 	                devs.sort((a, b) => (b.connected - a.connected) || a.name.localeCompare(b.name))
 	                root.devices = devs
+                    root.stateChanged()
 	                if (done) done()
 	            })
 	        })
@@ -338,11 +353,14 @@ Item {
 	                                if (!root.haveBluetoothctl) return
 	                                root.busyLabel = modelData.connected ? "Disconnecting…" : "Connecting…"
 	                                root.busyOpen = true
+                                    root.pendingMac = modelData.mac
+                                    root.pendingConnectedState = !modelData.connected
+                                    root.pendingPollsLeft = 15
 	                                const cmd = modelData.connected
 	                                    ? ("bluetoothctl disconnect " + modelData.mac + " >/dev/null 2>&1 || true")
 	                                    : ("bluetoothctl connect " + modelData.mac + " >/dev/null 2>&1 || true")
 	                                root.execSh(cmd, function() {
-	                                    root.refresh(false, function() { root.busyOpen = false; root.busyLabel = "" })
+	                                    pendingTimer.restart()
 	                                })
 	                            }
 	                        }
@@ -376,22 +394,33 @@ Item {
 	                    anchors.margins: 14
 	                    spacing: 12
 
-	                    EinkSymbol {
-	                        symbol: String.fromCodePoint(0xF0A1B) // nf-md-refresh
-	                        fallbackSymbol: "refresh"
-	                        fontFamily: root.theme.iconFontFamily
-	                        fontFamilyFallback: root.theme.iconFontFamilyFallback
-	                        color: root.theme.accent
-	                        size: 18
-	                        Layout.alignment: Qt.AlignVCenter
-	                        RotationAnimator on rotation {
-	                            running: root.busyOpen
-	                            from: 0
-	                            to: 360
-	                            duration: 900
-	                            loops: Animation.Infinite
-	                        }
-	                    }
+                        Item {
+                            Layout.alignment: Qt.AlignVCenter
+                            width: 20
+                            height: 20
+                            property real phase: 0
+                            RotationAnimator on phase {
+                                running: root.busyOpen
+                                from: 0
+                                to: 1
+                                duration: 850
+                                loops: Animation.Infinite
+                            }
+
+                            Repeater {
+                                model: 8
+                                delegate: Rectangle {
+                                    required property int index
+                                    width: 4
+                                    height: 4
+                                    radius: 2
+                                    color: root.theme.accent
+                                    opacity: Math.max(0.18, ((index + 1) / 8) - parent.phase)
+                                    x: (10 + Math.cos((index / 8) * Math.PI * 2) * 7) - width / 2
+                                    y: (10 + Math.sin((index / 8) * Math.PI * 2) * 7) - height / 2
+                                }
+                            }
+                        }
 
 	                    Text {
 	                        text: root.busyLabel.length ? root.busyLabel : "Working…"
@@ -406,4 +435,25 @@ Item {
 	            }
 	        }
 	    }
+
+    Timer {
+        id: pendingTimer
+        interval: 900
+        repeat: true
+        running: false
+        onTriggered: {
+            if (root.pendingPollsLeft <= 0) {
+                root.clearBusy()
+                root.refresh(false)
+                return
+            }
+            root.pendingPollsLeft -= 1
+            root.refresh(false, function() {
+                const match = root.devices.find(d => d.mac === root.pendingMac)
+                if (match && !!match.connected === root.pendingConnectedState) {
+                    root.clearBusy()
+                }
+            })
+        }
+    }
 	}

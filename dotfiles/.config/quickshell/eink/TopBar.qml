@@ -1411,6 +1411,7 @@ Item {
                 width: Math.min(implicitWidth, btLayer.width - 24)
                 height: implicitHeight
                 y: Math.round((-height - 24) + root.bluetoothAnim * (((btLayer.height - height) / 2) - (-height - 24)))
+                onStateChanged: quickSettings.refreshAll()
                 onRequestClose: root.bluetoothDetailsOpen = false
             }
         }

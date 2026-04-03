@@ -21,6 +21,8 @@ Item {
 
     property bool busyOpen: false
     property string busyLabel: ""
+    property string pendingConnectSsid: ""
+    property int pendingPollsLeft: 0
 
     implicitWidth: 520
     implicitHeight: 320
@@ -49,6 +51,14 @@ Item {
         err.waitForEnd = true
         cmd.command = ["sh", "-lc", script]
         cmd.running = true
+    }
+
+    function clearBusy() {
+        root.busyOpen = false
+        root.busyLabel = ""
+        root.pendingConnectSsid = ""
+        root.pendingPollsLeft = 0
+        pendingTimer.stop()
     }
 
 	    function refresh(doRescan, done) {
@@ -116,13 +126,15 @@ Item {
 	        if (!root.haveNmcli) return
 	        root.busyLabel = "Scanning…"
 	        root.busyOpen = true
-	        root.refresh(true, function() { root.busyOpen = false; root.busyLabel = "" })
+	        root.refresh(true, function() { root.clearBusy() })
 	    }
 
 	    function connect(ssid, password) {
 	        if (!root.haveNmcli) return
 	        root.busyLabel = "Connecting…"
 	        root.busyOpen = true
+            root.pendingConnectSsid = ssid
+            root.pendingPollsLeft = 15
 	        const ssidArg = JSON.stringify(ssid)
 	        const pw = (password ?? "")
 	        const cmd =
@@ -130,8 +142,6 @@ Item {
 	                ? ("LANG=C nmcli -w 15 dev wifi connect " + ssidArg + " password " + JSON.stringify(pw))
 	                : ("LANG=C nmcli -w 15 dev wifi connect " + ssidArg)
 	        root.execSh(cmd, function(code, outText, errText) {
-	            root.busyOpen = false
-	            root.busyLabel = ""
 	            const outLower = ((outText ?? "").trim()).toLowerCase()
 	            const errLower = ((errText ?? "").trim()).toLowerCase()
 	            const combined = (outLower + "\n" + errLower).trim()
@@ -152,6 +162,7 @@ Item {
 
 	            // If a password was provided but connect still failed, surface a short error.
 	            if (pw.length > 0 && code !== 0) {
+                    root.clearBusy()
 	                root.passwordError = (errText ?? outText ?? "").trim()
 	                root.passwordOpen = true
 	                return
@@ -160,9 +171,29 @@ Item {
 	            root.passwordOpen = false
 	            root.passwordValue = ""
 	            root.passwordError = ""
-	            root.refresh(true)
+                pendingTimer.restart()
 	        })
 	    }
+
+    Timer {
+        id: pendingTimer
+        interval: 900
+        repeat: true
+        running: false
+        onTriggered: {
+            if (root.pendingPollsLeft <= 0) {
+                root.clearBusy()
+                root.refresh(true)
+                return
+            }
+            root.pendingPollsLeft -= 1
+            root.refresh(true, function() {
+                if (root.pendingConnectSsid.length > 0 && root.activeSsid === root.pendingConnectSsid) {
+                    root.clearBusy()
+                }
+            })
+        }
+    }
 
 	    Component.onCompleted: refresh(false)
 
@@ -575,22 +606,33 @@ Item {
 	                    anchors.margins: 14
 	                    spacing: 12
 
-	                    EinkSymbol {
-	                        symbol: String.fromCodePoint(0xF0A1B) // nf-md-refresh (good enough)
-	                        fallbackSymbol: "refresh"
-	                        fontFamily: root.theme.iconFontFamily
-	                        fontFamilyFallback: root.theme.iconFontFamilyFallback
-	                        color: root.theme.accent
-	                        size: 18
-	                        Layout.alignment: Qt.AlignVCenter
-	                        RotationAnimator on rotation {
-	                            running: root.busyOpen
-	                            from: 0
-	                            to: 360
-	                            duration: 900
-	                            loops: Animation.Infinite
-	                        }
-	                    }
+                        Item {
+                            Layout.alignment: Qt.AlignVCenter
+                            width: 20
+                            height: 20
+                            property real phase: 0
+                            RotationAnimator on phase {
+                                running: root.busyOpen
+                                from: 0
+                                to: 1
+                                duration: 850
+                                loops: Animation.Infinite
+                            }
+
+                            Repeater {
+                                model: 8
+                                delegate: Rectangle {
+                                    required property int index
+                                    width: 4
+                                    height: 4
+                                    radius: 2
+                                    color: root.theme.accent
+                                    opacity: Math.max(0.18, ((index + 1) / 8) - parent.phase)
+                                    x: (10 + Math.cos((index / 8) * Math.PI * 2) * 7) - width / 2
+                                    y: (10 + Math.sin((index / 8) * Math.PI * 2) * 7) - height / 2
+                                }
+                            }
+                        }
 
 	                    Text {
 	                        text: root.busyLabel.length ? root.busyLabel : "Working…"
