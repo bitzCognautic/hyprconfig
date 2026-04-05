@@ -152,11 +152,15 @@ QtObject {
                 "[ -n \"$wp\" ] || exit 0; " +
                 "if [ \"$wp\" != \"${wp#/}\" ]; then wp=$(realpath \"$wp\" 2>/dev/null || echo \"$wp\"); fi; " +
                 "[ -f \"$wp\" ] || exit 0; " +
+                "ext=${wp##*.}; ext=$(printf '%s' \"$ext\" | tr '[:upper:]' '[:lower:]'); " +
+                "preview=" + JSON.stringify(theme.colorsPath.replace(/colors\.json$/, "wallpaper-preview.png")) + "; " +
+                "src=\"$wp\"; " +
+                "case \"$ext\" in mp4|webm|mkv|mov) if [ -s \"$preview\" ]; then src=\"$preview\"; fi ;; esac; " +
                 "out=" + JSON.stringify(theme.colorsPath) + "; " +
                 "mkdir -p \"$(dirname \"$out\")\" 2>/dev/null || true; " +
                 "tmp=\"$out.tmp\"; " +
                 "if command -v matugen >/dev/null 2>&1; then " +
-                "  matugen image \"$wp\" -m dark -j hex --dry-run --source-color-index 0 --quiet >\"$tmp\" 2>/dev/null || true; " +
+                "  matugen image \"$src\" -m dark -j hex --dry-run --source-color-index 0 --quiet >\"$tmp\" 2>/dev/null || true; " +
                 "fi; " +
                 "if [ ! -s \"$tmp\" ]; then " +
                 "  printf '%s\\n' '{\"colors\":{\"primary\":{\"dark\":{\"color\":\"#b9b2a1\"}},\"secondary\":{\"dark\":{\"color\":\"#8f8a7c\"}},\"tertiary\":{\"dark\":{\"color\":\"#d3ccb9\"}},\"surface_container_high\":{\"dark\":{\"color\":\"#2b2a28\"}},\"surface_container\":{\"dark\":{\"color\":\"#22211f\"}},\"on_surface\":{\"dark\":{\"color\":\"#efe9db\"}},\"on_surface_variant\":{\"dark\":{\"color\":\"#cdc6b4\"}},\"outline_variant\":{\"dark\":{\"color\":\"#4a4739\"}}}}' >\"$tmp\"; " +

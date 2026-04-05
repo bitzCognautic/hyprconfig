@@ -4,11 +4,11 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  eink-wallpaper /abs/path/to/wallpaper.(png|jpg|...)
+  eink-wallpaper /abs/path/to/wallpaper.(png|jpg|webp|mp4)
   eink-wallpaper --restore
 
 What it does:
-  - sets wallpaper via awww (starts daemon if needed)
+  - sets static wallpaper via awww or animated wallpaper via mpvpaper
   - generates ~/.cache/quickshell/eink/colors.json via matugen
   - generates ~/.config/kitty/colors-eink.conf from matugen base16
 EOF
@@ -58,32 +58,89 @@ if [[ ! -f "$wallpaper_path" ]]; then
   exit 2
 fi
 
+ext="${wallpaper_path##*.}"
+ext="${ext,,}"
+is_video=0
+case "$ext" in
+  mp4|webm|mkv|mov) is_video=1 ;;
+esac
+
 echo "$wallpaper_path" > "$wallpaper_file"
 
-if command -v awww >/dev/null 2>&1; then
-  if ! awww query >/dev/null 2>&1; then
-    (awww-daemon >/dev/null 2>&1 &) || true
+if [[ "$is_video" == "1" ]]; then
+  pkill -x awww-daemon >/dev/null 2>&1 || true
+  pkill -x mpvpaper >/dev/null 2>&1 || true
+  if command -v mpvpaper >/dev/null 2>&1; then
+    (mpvpaper -o "no-audio --loop-file=inf --panscan=1.0 --hwdec=auto-safe --vo=gpu-next" '*' "$wallpaper_path" >/dev/null 2>&1 &) || true
     sleep 0.2
   fi
+else
+  pkill -x mpvpaper >/dev/null 2>&1 || true
+  if command -v awww >/dev/null 2>&1; then
+    if ! awww query >/dev/null 2>&1; then
+      (awww-daemon >/dev/null 2>&1 &) || true
+      sleep 0.2
+    fi
 
-  # Never abort theme generation if wallpaper setting fails.
-  awww img "$wallpaper_path" \
-    --transition-type grow \
-    --transition-duration 0.9 \
-    --transition-fps 60 \
-    --transition-pos 0.5,0.3 >/dev/null 2>&1 || true
+    # Never abort theme generation if wallpaper setting fails.
+    awww img "$wallpaper_path" \
+      --transition-type grow \
+      --transition-duration 0.9 \
+      --transition-fps 60 \
+      --transition-pos 0.5,0.3 >/dev/null 2>&1 || true
+  fi
 fi
 
 tmp_json="$(mktemp)"
-cleanup() { rm -f "$tmp_json"; }
+theme_source="$wallpaper_path"
+preview_frame=""
+preview_cache="$cache_dir/wallpaper-preview.png"
+if [[ "$is_video" == "1" ]]; then
+  preview_frame="$(mktemp --suffix=.png)"
+  if command -v ffmpeg >/dev/null 2>&1; then
+    preview_seek="3"
+    if command -v ffprobe >/dev/null 2>&1; then
+      duration="$(ffprobe -v error -show_entries format=duration -of default=nk=1:nw=1 "$wallpaper_path" 2>/dev/null || true)"
+      if [[ -n "${duration:-}" ]]; then
+        preview_seek="$(awk -v d="$duration" 'BEGIN {
+          if (d + 0 <= 1.5) { print "0"; exit }
+          t = d * 0.15
+          if (t < 1.0) t = 1.0
+          if (t > 12.0) t = 12.0
+          if (t > d - 0.5) t = d - 0.5
+          if (t < 0) t = 0
+          printf "%.3f\n", t
+        }' 2>/dev/null || echo "3")"
+      fi
+    fi
+
+    ffmpeg -y -ss "$preview_seek" -i "$wallpaper_path" \
+      -frames:v 1 \
+      -vf "scale='min(1280,iw)':-2:force_original_aspect_ratio=decrease" \
+      "$preview_frame" >/dev/null 2>&1 || true
+    if [[ ! -s "$preview_frame" ]]; then
+      ffmpeg -y -i "$wallpaper_path" \
+        -frames:v 1 \
+        -vf "scale='min(1280,iw)':-2:force_original_aspect_ratio=decrease" \
+        "$preview_frame" >/dev/null 2>&1 || true
+    fi
+    if [[ -s "$preview_frame" ]]; then
+      cp -f "$preview_frame" "$preview_cache" 2>/dev/null || true
+      theme_source="$preview_cache"
+    fi
+  fi
+else
+  rm -f "$preview_cache" 2>/dev/null || true
+fi
+cleanup() { rm -f "$tmp_json" "${preview_frame:-}"; }
 trap cleanup EXIT
 
 {
   # matugen sometimes fails to decode specific images (bad/corrupt JPEGs, mislabeled formats, etc).
   # Never abort the wallpaper apply because of palette generation; we can fall back to a neutral palette.
-  matugen image "$wallpaper_path" -m dark -j hex --dry-run --source-color-index 0 --quiet >"$tmp_json" 2>/dev/null || true
+  matugen image "$theme_source" -m dark -j hex --dry-run --source-color-index 0 --quiet >"$tmp_json" 2>/dev/null || true
   if ! jq -e '.colors? // empty' <"$tmp_json" >/dev/null 2>&1; then
-    matugen image "$wallpaper_path" -m dark -j hex --dry-run --source-color-index 0 \
+    matugen image "$theme_source" -m dark -j hex --dry-run --source-color-index 0 \
       --fallback-color "#d9c76f" --continue-on-error --quiet >"$tmp_json" 2>/dev/null || true
   fi
 } || true
@@ -95,7 +152,7 @@ colors_out="$cache_dir/colors.json"
 #  1) mean saturation in HSL (near 0)
 if command -v magick >/dev/null 2>&1; then
   # In ImageMagick, HSL channels map as: R=Hue, G=Saturation, B=Lightness.
-  sat_mean="$(magick "$wallpaper_path" -resize 96x96\! -colorspace HSL -format "%[fx:mean.g]" info: 2>/dev/null || true)"
+  sat_mean="$(magick "$theme_source" -resize 96x96\! -colorspace HSL -format "%[fx:mean.g]" info: 2>/dev/null || true)"
   is_gray=0
   if [[ -n "${sat_mean:-}" ]]; then
     is_gray="$(awk -v s="$sat_mean" 'BEGIN{ if (s+0 < 0.12) print 1; else print 0 }' 2>/dev/null || echo 0)"
@@ -209,7 +266,8 @@ muted_hex="${muted_hex#\#}"
   echo
   echo "background {"
   # hyprlock config does not support quoted strings reliably; escape spaces.
-  wp_esc="${wallpaper_path//\\/\\\\}"
+  lockscreen_source="$theme_source"
+  wp_esc="${lockscreen_source//\\/\\\\}"
   wp_esc="${wp_esc// /\\ }"
   echo "    path = ${wp_esc}"
   echo "    color = rgba(000000ee)"

@@ -297,6 +297,7 @@ if $do_packages; then
     dolphin \
     grim \
     slurp \
+    ffmpeg \
     tesseract \
     tesseract-data-eng \
     wl-clipboard \
@@ -334,7 +335,8 @@ if $do_packages; then
   else
     aur_install "$aur_helper" \
       quickshell-git \
-      matugen
+      matugen \
+      mpvpaper
 
     # Optional (font family used by the bar if available)
     aur_install_optional "$aur_helper" \

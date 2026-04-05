@@ -312,483 +312,466 @@ Item {
                         width: parent.width
                         spacing: 14
 
-                    // Top bar
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        Text {
-                            text: "Top bar"
-                            color: root.theme.textMuted
-                            font.family: root.theme.fontFamily
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
-                        }
-
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
 
                             Text {
-                                text: "Top margin"
-                                color: root.theme.text
+                                text: "Top bar"
+                                color: root.theme.textMuted
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
+                            }
+
+                            RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Top margin"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillTopMargin", root.settings.pillTopMargin, -1, 0, 40) }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Text {
+                                    text: "" + root.settings.pillTopMargin
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    width: 34
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillTopMargin", root.settings.pillTopMargin, 1, 0, 40) }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
                             }
 
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillTopMargin", root.settings.pillTopMargin, -1, 0, 40) }
-                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-                            }
-
-                            Text {
-                                text: "" + root.settings.pillTopMargin
-                                color: root.theme.text
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: 12
-                                width: 34
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillTopMargin", root.settings.pillTopMargin, 1, 0, 40) }
-                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            Text {
-                                text: "Height"
-                                color: root.theme.text
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: 12
+                            RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Height"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHeight", root.settings.pillHeight, -1, 24, 60) }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Text {
+                                    text: "" + root.settings.pillHeight
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    width: 34
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHeight", root.settings.pillHeight, 1, 24, 60) }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
                             }
 
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHeight", root.settings.pillHeight, -1, 24, 60) }
-                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-                            }
-
-                            Text {
-                                text: "" + root.settings.pillHeight
-                                color: root.theme.text
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: 12
-                                width: 34
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHeight", root.settings.pillHeight, 1, 24, 60) }
-                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            Text {
-                                text: "Time format"
-                                color: root.theme.text
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: 12
+                            RowLayout {
                                 Layout.fillWidth: true
-                            }
+                                spacing: 10
 
-                            Rectangle {
-                                width: 140
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.75)
+                                Text {
+                                    text: "Time format"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
 
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 3
-                                    spacing: 3
+                                Rectangle {
+                                    width: 140
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.75)
 
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        height: 24
-                                        radius: 10
-                                        color: !root.settings.time24h
-                                            ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.92)
-                                            : "transparent"
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: root.settings.save(({ time24h: false }))
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 3
+
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            height: 24
+                                            radius: 10
+                                            color: !root.settings.time24h ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.92) : "transparent"
+                                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.settings.save(({ time24h: false })) }
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "12h"
+                                                color: !root.settings.time24h ? root.theme.onAccent : root.theme.text
+                                                font.family: root.theme.fontFamily
+                                                font.pixelSize: 11
+                                                font.weight: Font.DemiBold
+                                            }
                                         }
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "12h"
-                                            color: !root.settings.time24h ? root.theme.onAccent : root.theme.text
-                                            font.family: root.theme.fontFamily
-                                            font.pixelSize: 11
-                                            font.weight: Font.DemiBold
-                                        }
-                                    }
 
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        height: 24
-                                        radius: 10
-                                        color: root.settings.time24h
-                                            ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.92)
-                                            : "transparent"
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: root.settings.save(({ time24h: true }))
-                                        }
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "24h"
-                                            color: root.settings.time24h ? root.theme.onAccent : root.theme.text
-                                            font.family: root.theme.fontFamily
-                                            font.pixelSize: 11
-                                            font.weight: Font.DemiBold
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            height: 24
+                                            radius: 10
+                                            color: root.settings.time24h ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.92) : "transparent"
+                                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.settings.save(({ time24h: true })) }
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "24h"
+                                                color: root.settings.time24h ? root.theme.onAccent : root.theme.text
+                                                font.family: root.theme.fontFamily
+                                                font.pixelSize: 11
+                                                font.weight: Font.DemiBold
+                                            }
                                         }
                                     }
                                 }
                             }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Horizontal padding"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHPadding", root.settings.pillHPadding, -2, -1, 80) }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Text {
+                                    text: "" + root.settings.pillHPadding
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    width: 34
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHPadding", root.settings.pillHPadding, 2, -1, 80) }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Opacity"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepReal("pillOpacity", root.settings.pillOpacity, -0.05, 0.15, 1.0) }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Text {
+                                    text: Math.round(root.settings.pillOpacity * 100) + "%"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    width: 52
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepReal("pillOpacity", root.settings.pillOpacity, 0.05, 0.15, 1.0) }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+                            }
                         }
 
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
 
                             Text {
-                                text: "Horizontal padding"
-                                color: root.theme.text
+                                text: "Idle"
+                                color: root.theme.textMuted
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
+                            }
+
+                            RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Screen off after"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: Math.round(root.settings.idleScreenOffSeconds) + "s"
+                                    color: root.theme.textMuted
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleScreenOffSeconds", root.settings.idleScreenOffSeconds, -15, 0, 7200); root.settings.applyIdle() } }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleScreenOffSeconds", root.settings.idleScreenOffSeconds, 15, 0, 7200); root.settings.applyIdle() } }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
                             }
 
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHPadding", root.settings.pillHPadding, -2, -1, 80) }
-                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
 
-                            Text {
-                                text: "" + root.settings.pillHPadding
-                                color: root.theme.text
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: 12
-                                width: 34
-                                horizontalAlignment: Text.AlignHCenter
-                            }
+                                Text {
+                                    text: "Sleep after"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
 
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("pillHPadding", root.settings.pillHPadding, 2, -1, 80) }
-                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                Text {
+                                    text: Math.round(root.settings.idleSleepSeconds) + "s"
+                                    color: root.theme.textMuted
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleSleepSeconds", root.settings.idleSleepSeconds, -60, 0, 14400); root.settings.applyIdle() } }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleSleepSeconds", root.settings.idleSleepSeconds, 60, 0, 14400); root.settings.applyIdle() } }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
                             }
                         }
 
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
 
                             Text {
-                                text: "Opacity"
-                                color: root.theme.text
+                                text: "Nightlight"
+                                color: root.theme.textMuted
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
+                            }
+
+                            RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Day temp"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: Math.round(root.settings.nightlightTempDay) + "K"
+                                    color: root.theme.textMuted
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempDay", root.settings.nightlightTempDay, -100, 2000, 6500) }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempDay", root.settings.nightlightTempDay, 100, 2000, 6500) }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
                             }
 
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepReal("pillOpacity", root.settings.pillOpacity, -0.05, 0.15, 1.0) }
-                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: "Night temp"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: Math.round(root.settings.nightlightTempNight) + "K"
+                                    color: root.theme.textMuted
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempNight", root.settings.nightlightTempNight, -100, 2000, 6500) }
+                                    Text { anchors.centerIn: parent; text: "-"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
+
+                                Rectangle {
+                                    width: 44
+                                    height: 30
+                                    radius: 12
+                                    color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempNight", root.settings.nightlightTempNight, 100, 2000, 6500) }
+                                    Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
+                                }
                             }
 
                             Text {
-                                text: Math.round(root.settings.pillOpacity * 100) + "%"
-                                color: root.theme.text
+                                visible: root.settings.nightlightTempDay <= root.settings.nightlightTempNight
+                                text: "Day temp must be higher than night temp"
+                                color: Qt.rgba(1, 0.35, 0.35, 0.9)
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: 12
-                                width: 52
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            Rectangle {
-                                width: 44
-                                height: 30
-                                radius: 12
-                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepReal("pillOpacity", root.settings.pillOpacity, 0.05, 0.15, 1.0) }
-                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-                            }
-	                        }
-	                    }
-
-	                    // Idle (hypridle)
-	                    ColumnLayout {
-	                        Layout.fillWidth: true
-	                        spacing: 10
-
-	                        Text {
-	                            text: "Idle"
-	                            color: root.theme.textMuted
-	                            font.family: root.theme.fontFamily
-	                            font.pixelSize: 11
-	                            font.weight: Font.DemiBold
-	                        }
-
-	                        RowLayout {
-	                            Layout.fillWidth: true
-	                            spacing: 10
-
-		                            Text {
-		                                text: "Screen off after"
-	                                color: root.theme.text
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                Layout.fillWidth: true
-	                            }
-
-		                            Text {
-		                                text: Math.round(root.settings.idleScreenOffSeconds) + "s"
-	                                color: root.theme.textMuted
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                font.weight: Font.DemiBold
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-		                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleScreenOffSeconds", root.settings.idleScreenOffSeconds, -15, 0, 7200); root.settings.applyIdle() } }
-	                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-		                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleScreenOffSeconds", root.settings.idleScreenOffSeconds, 15, 0, 7200); root.settings.applyIdle() } }
-	                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-	                        }
-
-	                        RowLayout {
-	                            Layout.fillWidth: true
-	                            spacing: 10
-
-	                            Text {
-	                                text: "Sleep after"
-	                                color: root.theme.text
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                Layout.fillWidth: true
-	                            }
-
-	                            Text {
-	                                text: Math.round(root.settings.idleSleepSeconds) + "s"
-	                                color: root.theme.textMuted
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                font.weight: Font.DemiBold
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-	                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleSleepSeconds", root.settings.idleSleepSeconds, -60, 0, 14400); root.settings.applyIdle() } }
-	                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-	                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.stepInt("idleSleepSeconds", root.settings.idleSleepSeconds, 60, 0, 14400); root.settings.applyIdle() } }
-	                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-	                        }
-
-		                        // (No dim level for DPMS off)
-	                    }
-
-	                    // Nightlight (wlsunset)
-	                    ColumnLayout {
-	                        Layout.fillWidth: true
-	                        spacing: 10
-
-	                        Text {
-	                            text: "Nightlight"
-	                            color: root.theme.textMuted
-	                            font.family: root.theme.fontFamily
-	                            font.pixelSize: 11
-	                            font.weight: Font.DemiBold
-	                        }
-
-	                        RowLayout {
-	                            Layout.fillWidth: true
-	                            spacing: 10
-
-	                            Text {
-	                                text: "Day temp"
-	                                color: root.theme.text
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                Layout.fillWidth: true
-	                            }
-
-	                            Text {
-	                                text: Math.round(root.settings.nightlightTempDay) + "K"
-	                                color: root.theme.textMuted
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                font.weight: Font.DemiBold
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-	                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempDay", root.settings.nightlightTempDay, -100, 2000, 6500) }
-	                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-	                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempDay", root.settings.nightlightTempDay, 100, 2000, 6500) }
-	                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-	                        }
-
-	                        RowLayout {
-	                            Layout.fillWidth: true
-	                            spacing: 10
-
-	                            Text {
-	                                text: "Night temp"
-	                                color: root.theme.text
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                Layout.fillWidth: true
-	                            }
-
-	                            Text {
-	                                text: Math.round(root.settings.nightlightTempNight) + "K"
-	                                color: root.theme.textMuted
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                font.weight: Font.DemiBold
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-	                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempNight", root.settings.nightlightTempNight, -100, 2000, 6500) }
-	                                Text { anchors.centerIn: parent; text: "–"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-
-	                            Rectangle {
-	                                width: 44
-	                                height: 30
-	                                radius: 12
-	                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-	                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.stepInt("nightlightTempNight", root.settings.nightlightTempNight, 100, 2000, 6500) }
-	                                Text { anchors.centerIn: parent; text: "+"; color: root.theme.text; font.pixelSize: 16; font.family: root.theme.fontFamily }
-	                            }
-	                        }
-
-	                        Text {
-	                            visible: root.settings.nightlightTempDay <= root.settings.nightlightTempNight
-	                            text: "Day temp must be higher than night temp"
-	                            color: Qt.rgba(1, 0.35, 0.35, 0.9)
-	                            font.family: root.theme.fontFamily
-	                            font.pixelSize: 11
-	                            font.weight: Font.DemiBold
-	                        }
-	                    }
-
-	                    Item { Layout.fillHeight: true }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 40
-                            radius: 14
-                            color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-	                                onClicked: root.settings.save({
-	                                    pillTopMargin: 5,
-	                                    pillHeight: 34,
-	                                    pillHPadding: -1,
-	                                    pillOpacity: 1.0,
-	                                    popupGap: 10,
-	                                    popupOverlap: 10,
-	                                    idleScreenOffSeconds: 120,
-	                                    idleSleepSeconds: 900,
-	                                    nightlightTempDay: 3400,
-	                                    nightlightTempNight: 3200,
-	                                })
-	                            }
-                            Text {
-                                anchors.centerIn: parent
-                                text: "Reset defaults"
-                                color: root.theme.text
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: 11
                                 font.weight: Font.DemiBold
                             }
                         }
-                    }
+
+                        Item { Layout.fillHeight: true }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 40
+                                radius: 14
+                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.95)
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.settings.save({
+                                        pillTopMargin: 5,
+                                        pillHeight: 34,
+                                        pillHPadding: -1,
+                                        pillOpacity: 1.0,
+                                        popupGap: 10,
+                                        popupOverlap: 10,
+                                        idleScreenOffSeconds: 120,
+                                        idleSleepSeconds: 900,
+                                        nightlightTempDay: 3400,
+                                        nightlightTempNight: 3200,
+                                    })
+                                }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "Reset defaults"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -798,150 +781,272 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                ColumnLayout {
-                    id: wallpapersSection
+                Flickable {
                     anchors.fill: parent
-                    spacing: 10
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: width
+                    contentHeight: wallpapersSection.implicitHeight
 
-                    readonly property string wallpapersDir: (root.settings?.home ?? "") + "/Pictures/Wallpapers/"
-                    property string selectedWallpaper: ""
+                    ColumnLayout {
+                        id: wallpapersSection
+                        width: parent.width
+                        spacing: 10
 
-	                    Text {
-	                        text: "Wallpaper"
-	                        color: root.theme.textMuted
-	                        font.family: root.theme.fontFamily
-	                        font.pixelSize: 11
-	                        font.weight: Font.DemiBold
-	                    }
+                        readonly property string wallpapersDir: (root.settings?.home ?? "") + "/Pictures/Wallpapers/"
+                        readonly property string wallpapersFolderUrl: "file:///" + String(wallpapersDir).split("/").filter(s => s.length > 0).join("/") + "/"
+                        property string selectedWallpaper: root.settings?.wallpaperPath ?? ""
 
-	                    // Search
-	                    Rectangle {
-	                        Layout.fillWidth: true
-	                        height: 36
-	                        radius: 14
-	                        color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.75)
-	                        border.width: 1
-	                        border.color: Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.25)
+                        function staticFilters(term) {
+                            const t = (term ?? "").trim()
+                            if (t.length === 0) return ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.PNG", "*.JPG", "*.JPEG", "*.WEBP"]
+                            return [
+                                "*" + t + "*.png",
+                                "*" + t + "*.jpg",
+                                "*" + t + "*.jpeg",
+                                "*" + t + "*.webp",
+                                "*" + t + "*.PNG",
+                                "*" + t + "*.JPG",
+                                "*" + t + "*.JPEG",
+                                "*" + t + "*.WEBP",
+                            ]
+                        }
 
-	                        RowLayout {
-	                            anchors.fill: parent
-	                            anchors.margins: 8
-	                            spacing: 8
+                        function animatedFilters(term) {
+                            const t = (term ?? "").trim()
+                            if (t.length === 0) return ["*.mp4", "*.MP4"]
+                            return ["*" + t + "*.mp4", "*" + t + "*.MP4"]
+                        }
 
-	                            EinkSymbol {
-	                                symbol: String.fromCodePoint(0xF034E) // nf-md-magnify
-	                                fallbackSymbol: "search"
-	                                fontFamily: root.theme.iconFontFamily
-	                                fontFamilyFallback: root.theme.iconFontFamilyFallback
-	                                color: root.theme.textMuted
-	                                size: 16
-	                                Layout.alignment: Qt.AlignVCenter
-	                            }
+                        Text {
+                            text: "Wallpaper"
+                            color: root.theme.textMuted
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                        }
 
-	                            TextInput {
-	                                id: wallpaperSearch
-	                                Layout.fillWidth: true
-	                                focus: true
-	                                color: root.theme.text
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                clip: true
-	                                selectByMouse: true
-	                                onTextChanged: wallpapersModel.nameFilters = [
-	                                    "*" + text + "*.png",
-	                                    "*" + text + "*.jpg",
-	                                    "*" + text + "*.jpeg",
-	                                    "*" + text + "*.webp",
-	                                    "*" + text + "*.PNG",
-	                                    "*" + text + "*.JPG",
-	                                    "*" + text + "*.JPEG",
-	                                    "*" + text + "*.WEBP",
-	                                ]
-	                            }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 36
+                            radius: 14
+                            color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.75)
+                            border.width: 1
+                            border.color: Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.25)
 
-	                            Text {
-	                                visible: wallpaperSearch.text.length === 0 && !wallpaperSearch.activeFocus
-	                                text: "Search wallpapers…"
-	                                color: Qt.rgba(root.theme.textMuted.r, root.theme.textMuted.g, root.theme.textMuted.b, 0.9)
-	                                font.family: root.theme.fontFamily
-	                                font.pixelSize: 12
-	                                elide: Text.ElideRight
-	                                Layout.fillWidth: true
-	                                Layout.alignment: Qt.AlignVCenter
-	                                MouseArea {
-	                                    anchors.fill: parent
-	                                    cursorShape: Qt.IBeamCursor
-	                                    onClicked: wallpaperSearch.forceActiveFocus()
-	                                }
-	                            }
-	                        }
-	                    }
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 8
 
-	                    FolderListModel {
-	                        id: wallpapersModel
-	                        // FolderListModel expects a file URL. Build a stable `file:///.../` URL.
-	                        folder: "file:///" + String(wallpapersSection.wallpapersDir).split("/").filter(s => s.length > 0).join("/") + "/"
-	                        nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.PNG", "*.JPG", "*.JPEG", "*.WEBP"]
-	                        showDirs: false
-	                        showDotAndDotDot: false
-	                        sortField: FolderListModel.Name
-	                        sortReversed: false
-	                    }
+                                EinkSymbol {
+                                    symbol: String.fromCodePoint(0xF034E)
+                                    fallbackSymbol: "search"
+                                    fontFamily: root.theme.iconFontFamily
+                                    fontFamilyFallback: root.theme.iconFontFamilyFallback
+                                    color: root.theme.textMuted
+                                    size: 16
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
 
-                    Text {
-                        visible: wallpapersModel.count === 0
-                        text: "No images found in " + wallpapersSection.wallpapersDir
-                        color: root.theme.textMuted
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: 12
-                    }
+                                TextInput {
+                                    id: wallpaperSearch
+                                    Layout.fillWidth: true
+                                    color: root.theme.text
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    clip: true
+                                    selectByMouse: true
+                                    onTextChanged: {
+                                        wallpapersModel.nameFilters = wallpapersSection.staticFilters(text)
+                                        animatedWallpapersModel.nameFilters = wallpapersSection.animatedFilters(text)
+                                    }
+                                }
 
-		                    GridView {
-	                        Layout.fillWidth: true
-	                        Layout.fillHeight: true
-	                        visible: wallpapersModel.count > 0
-	                        clip: true
-	                        // Fit an integer number of columns to remove leftover right-side space.
-	                        readonly property int cols: Math.max(2, Math.floor(width / 160))
-	                        cellWidth: Math.floor(width / cols)
-	                        cellHeight: 96
-	                        model: wallpapersModel
+                                Text {
+                                    visible: wallpaperSearch.text.length === 0 && !wallpaperSearch.activeFocus
+                                    text: "Search wallpapers..."
+                                    color: Qt.rgba(root.theme.textMuted.r, root.theme.textMuted.g, root.theme.textMuted.b, 0.9)
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: 12
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
 
-		                        delegate: Rectangle {
-	                            width: GridView.view.cellWidth - 10
-	                            height: 86
-	                            x: Math.round((GridView.view.cellWidth - width) / 2)
-	                            radius: 14
-	                            color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.85)
-                            border.width: (wallpapersSection.selectedWallpaper === filePath) ? 2 : 1
-                            border.color: (wallpapersSection.selectedWallpaper === filePath)
-                                ? root.theme.accent
-                                : Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.35)
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.IBeamCursor
+                                        onClicked: wallpaperSearch.forceActiveFocus()
+                                    }
+                                }
+                            }
+                        }
 
-	                            Image {
-	                                anchors.fill: parent
-	                                anchors.margins: 6
-	                                source: "file://" + filePath
-	                                fillMode: Image.PreserveAspectCrop
-	                                asynchronous: true
-	                                cache: true
-	                                smooth: false
-	                                mipmap: false
-	                                sourceSize.width: 240
-	                                sourceSize.height: 140
-	                                clip: true
-	                            }
+                        FolderListModel {
+                            id: wallpapersModel
+                            folder: wallpapersSection.wallpapersFolderUrl
+                            nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.PNG", "*.JPG", "*.JPEG", "*.WEBP"]
+                            showDirs: false
+                            showDotAndDotDot: false
+                            sortField: FolderListModel.Name
+                            sortReversed: false
+                        }
 
-	                            MouseArea {
-	                                anchors.fill: parent
-	                                hoverEnabled: true
-	                                cursorShape: Qt.PointingHandCursor
-	                                onClicked: {
-	                                    wallpapersSection.selectedWallpaper = filePath
-	                                    root.settings.applyWallpaper(filePath)
-	                                    console.warn("wallpaper: applied", filePath)
-	                                }
-	                            }
+                        FolderListModel {
+                            id: animatedWallpapersModel
+                            folder: wallpapersSection.wallpapersFolderUrl
+                            nameFilters: ["*.mp4", "*.MP4"]
+                            showDirs: false
+                            showDotAndDotDot: false
+                            sortField: FolderListModel.Name
+                            sortReversed: false
+                        }
+
+                        Text {
+                            text: "Static"
+                            color: root.theme.textMuted
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                        }
+
+                        Text {
+                            visible: wallpapersModel.count === 0
+                            text: "No static wallpapers found in " + wallpapersSection.wallpapersDir
+                            color: root.theme.textMuted
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: 12
+                        }
+
+                        GridView {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: wallpapersModel.count > 0 ? 200 : 0
+                            visible: wallpapersModel.count > 0
+                            clip: true
+                            readonly property int cols: Math.max(2, Math.floor(width / 160))
+                            cellWidth: Math.floor(width / cols)
+                            cellHeight: 96
+                            model: wallpapersModel
+
+                            delegate: Rectangle {
+                                width: GridView.view.cellWidth - 10
+                                height: 86
+                                x: Math.round((GridView.view.cellWidth - width) / 2)
+                                radius: 14
+                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.85)
+                                border.width: (wallpapersSection.selectedWallpaper === filePath) ? 2 : 1
+                                border.color: (wallpapersSection.selectedWallpaper === filePath)
+                                    ? root.theme.accent
+                                    : Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.35)
+
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: 6
+                                    source: "file://" + filePath
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    cache: true
+                                    smooth: false
+                                    mipmap: false
+                                    sourceSize.width: 240
+                                    sourceSize.height: 140
+                                    clip: true
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        wallpapersSection.selectedWallpaper = filePath
+                                        root.settings.applyWallpaper(filePath)
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "Animated"
+                            color: root.theme.textMuted
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                        }
+
+                        Text {
+                            visible: animatedWallpapersModel.count === 0
+                            text: "No animated wallpapers found in " + wallpapersSection.wallpapersDir
+                            color: root.theme.textMuted
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: 12
+                        }
+
+                        GridView {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: animatedWallpapersModel.count > 0 ? 200 : 0
+                            visible: animatedWallpapersModel.count > 0
+                            clip: true
+                            readonly property int cols: Math.max(2, Math.floor(width / 160))
+                            cellWidth: Math.floor(width / cols)
+                            cellHeight: 96
+                            model: animatedWallpapersModel
+
+                            delegate: Rectangle {
+                                width: GridView.view.cellWidth - 10
+                                height: 86
+                                x: Math.round((GridView.view.cellWidth - width) / 2)
+                                radius: 14
+                                color: Qt.rgba(root.theme.surfaceAlt.r, root.theme.surfaceAlt.g, root.theme.surfaceAlt.b, 0.85)
+                                border.width: (wallpapersSection.selectedWallpaper === filePath) ? 2 : 1
+                                border.color: (wallpapersSection.selectedWallpaper === filePath)
+                                    ? root.theme.accent
+                                    : Qt.rgba(root.theme.outline.r, root.theme.outline.g, root.theme.outline.b, 0.35)
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: 6
+                                    radius: 10
+                                    color: Qt.rgba(0, 0, 0, 0.20)
+
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        spacing: 6
+
+                                        Item { Layout.fillHeight: true }
+                                        EinkSymbol {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            symbol: "play_arrow"
+                                            fallbackSymbol: "play_arrow"
+                                            fontFamily: "Material Symbols Rounded"
+                                            fontFamilyFallback: "Material Symbols Rounded"
+                                            color: wallpapersSection.selectedWallpaper === filePath ? root.theme.accent : root.theme.text
+                                            size: 28
+                                        }
+                                        Text {
+                                            text: fileName
+                                            color: root.theme.text
+                                            font.family: root.theme.fontFamily
+                                            font.pixelSize: 11
+                                            font.weight: Font.DemiBold
+                                            horizontalAlignment: Text.AlignHCenter
+                                            elide: Text.ElideMiddle
+                                            Layout.fillWidth: true
+                                        }
+                                        Item { Layout.fillHeight: true }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        wallpapersSection.selectedWallpaper = filePath
+                                        root.settings.applyWallpaper(filePath)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1015,7 +1120,6 @@ Item {
                                     const vals = chart.values ?? []
                                     if (!vals.length) return
 
-                                    // grid
                                     ctx.strokeStyle = "rgba(255,255,255,0.06)"
                                     ctx.lineWidth = 1
                                     for (let i = 1; i <= 3; i++) {
