@@ -50,4 +50,5 @@ Restore last wallpaper on login (Hyprland `exec-once` calls this):
 ```bash
 eink-wallpaper --restore
 ```
+
 # hyprconfig
